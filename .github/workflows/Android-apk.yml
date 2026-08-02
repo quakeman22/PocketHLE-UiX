@@ -6,11 +6,13 @@ on:
     branches: [main]
     paths:
       - 'frontends/pocket-android/**'
+      - 'frontends/pocket-android-jni/**'
       - 'crates/**'
       - '.github/workflows/android-apk.yml'
   pull_request:
     paths:
       - 'frontends/pocket-android/**'
+      - 'frontends/pocket-android-jni/**'
       - 'crates/**'
 
 jobs:
@@ -52,16 +54,23 @@ jobs:
             -o frontends/pocket-android/app/src/main/jniLibs \
             build --release -p pocket-android-jni
 
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Generate Gradle wrapper
+        working-directory: frontends/pocket-android
+        run: gradle wrapper --gradle-version 8.7
+
       - name: Grant execute permission for gradlew
         run: chmod +x frontends/pocket-android/gradlew
 
       - name: Build APK
         working-directory: frontends/pocket-android
-        run: ./gradlew assembleRelease --no-daemon
+        run: ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: PocketHLE-apk
-          path: frontends/pocket-android/app/build/outputs/apk/release/*.apk
+          path: frontends/pocket-android/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
