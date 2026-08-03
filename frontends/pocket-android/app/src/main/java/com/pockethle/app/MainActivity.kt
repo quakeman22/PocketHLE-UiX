@@ -42,6 +42,15 @@ class MainActivity : AppCompatActivity() {
         if (uri != null) handleImport(uri)
     }
 
+    private var pendingCoverGameId: String? = null
+    private val pickCover = registerForActivityResult(
+        ActivityResultContracts.GetContent(),
+    ) { uri ->
+        val gameId = pendingCoverGameId
+        pendingCoverGameId = null
+        if (uri != null && gameId != null) handleCoverPicked(gameId, uri)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -60,6 +69,14 @@ class MainActivity : AppCompatActivity() {
                 )
             },
             onRemove = { entry -> confirmRemove(entry) },
+            onChooseCover = { entry ->
+                pendingCoverGameId = entry.id
+                pickCover.launch("image/*")
+            },
+            onResetCover = { entry ->
+                CoverStore.reset(this, entry.id)
+                adapter.notifyCoverChanged(entry.id)
+            },
             libraryRoot = rootDir,
         )
         recycler.layoutManager = GridLayoutManager(this, gridSpanCount())
@@ -205,6 +222,22 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun handleCoverPicked(gameId: String, uri: Uri) {
+        lifecycleScope.launch {
+            val ok = withContext(Dispatchers.IO) {
+                runCatching {
+                    contentResolver.openInputStream(uri)?.use { input ->
+                        CoverStore.save(this@MainActivity, gameId, input)
+                    } ?: error("Could not open picked image")
+                }
+            }
+            ok.onSuccess { adapter.notifyCoverChanged(gameId) }
+            ok.onFailure { err ->
+                Snackbar.make(recycler, err.message ?: "Failed to set cover", Snackbar.LENGTH_LONG).show()
+            }
+        }
+    }
+
     private fun confirmRemove(entry: GameEntry) {
         AlertDialog.Builder(this)
             .setTitle(R.string.remove_title)
@@ -213,6 +246,7 @@ class MainActivity : AppCompatActivity() {
                 val raw = NativeBridge.removeGame(rootDir, entry.id)
                 val obj = runCatching { JSONObject(raw) }.getOrNull()
                 if (obj?.optBoolean("ok") == true) {
+                    CoverStore.reset(this, entry.id)
                     refreshLibrary()
                 } else {
                     Snackbar.make(
