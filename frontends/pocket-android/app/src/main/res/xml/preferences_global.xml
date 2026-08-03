@@ -2,46 +2,52 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <ListPreference
-        android:key="default_cpu_backend"
-        android:title="@string/pref_default_backend_title"
-        android:summary="@string/pref_default_backend_summary"
-        android:entries="@array/cpu_backend_entries"
-        android:entryValues="@array/cpu_backend_values"
-        android:defaultValue="stub" />
+    <PreferenceCategory android:title="@string/pref_category_emulation">
+        <ListPreference
+            android:key="default_cpu_backend"
+            android:title="@string/pref_default_backend_title"
+            android:summary="@string/pref_default_backend_summary"
+            android:entries="@array/cpu_backend_entries"
+            android:entryValues="@array/cpu_backend_values"
+            android:defaultValue="stub" />
 
-    <SeekBarPreference
-        android:key="verbosity"
-        android:title="@string/pref_verbosity_title"
-        android:summary="@string/pref_verbosity_summary"
-        android:max="3"
-        app:min="0"
-        app:showSeekBarValue="true"
-        android:defaultValue="1" />
+        <SeekBarPreference
+            android:key="verbosity"
+            android:title="@string/pref_verbosity_title"
+            android:summary="@string/pref_verbosity_summary"
+            android:max="3"
+            app:min="0"
+            app:showSeekBarValue="true"
+            android:defaultValue="1" />
+    </PreferenceCategory>
 
-    <SwitchPreferenceCompat
-        android:key="show_fps"
-        android:title="@string/pref_show_fps_title"
-        android:summary="@string/pref_show_fps_summary"
-        android:defaultValue="true" />
+    <PreferenceCategory android:title="@string/pref_category_display">
+        <SwitchPreferenceCompat
+            android:key="show_fps"
+            android:title="@string/pref_show_fps_title"
+            android:summary="@string/pref_show_fps_summary"
+            android:defaultValue="true" />
 
-    <SwitchPreferenceCompat
-        android:key="fullscreen"
-        android:title="@string/pref_fullscreen_title"
-        android:summary="@string/pref_fullscreen_summary"
-        android:defaultValue="false" />
+        <SwitchPreferenceCompat
+            android:key="fullscreen"
+            android:title="@string/pref_fullscreen_title"
+            android:summary="@string/pref_fullscreen_summary"
+            android:defaultValue="false" />
 
-    <ListPreference
-        android:key="orientation"
-        android:title="@string/pref_orientation_title"
-        android:summary="@string/pref_orientation_summary"
-        android:entries="@array/orientation_entries"
-        android:entryValues="@array/orientation_values"
-        android:defaultValue="auto" />
+        <ListPreference
+            android:key="orientation"
+            android:title="@string/pref_orientation_title"
+            android:summary="@string/pref_orientation_summary"
+            android:entries="@array/orientation_entries"
+            android:entryValues="@array/orientation_values"
+            android:defaultValue="auto" />
+    </PreferenceCategory>
 
-    <Preference
-        android:key="library_root"
-        android:title="@string/pref_library_root_title"
-        android:selectable="false" />
+    <PreferenceCategory android:title="@string/pref_category_library">
+        <Preference
+            android:key="library_root"
+            android:title="@string/pref_library_root_title"
+            android:selectable="false" />
+    </PreferenceCategory>
 
 </PreferenceScreen>
