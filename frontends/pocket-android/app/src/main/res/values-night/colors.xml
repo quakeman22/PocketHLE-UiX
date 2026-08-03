@@ -1,8 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- "Sand" Material 3 palette (dark) — deep warm browns instead of black. -->
 <resources>
-    <color name="primary">#5C6BC0</color>
-    <color name="primary_dark">#3949AB</color>
-    <color name="accent">#FF80AB</color>
-    <color name="grid_icon_bg">#262B33</color>
+    <color name="md_primary">#E0BB86</color>
+    <color name="md_on_primary">#402D0F</color>
+    <color name="md_primary_container">#5C4020</color>
+    <color name="md_on_primary_container">#FCDFB6</color>
+
+    <color name="md_secondary">#D4C4A6</color>
+    <color name="md_on_secondary">#362B18</color>
+    <color name="md_secondary_container">#4E4330</color>
+    <color name="md_on_secondary_container">#F0E0C2</color>
+
+    <color name="md_tertiary">#C99B6E</color>
+    <color name="md_on_tertiary">#3A2410</color>
+
+    <color name="md_background">#1C160D</color>
+    <color name="md_on_background">#ECE0CD</color>
+    <color name="md_surface">#1C160D</color>
+    <color name="md_on_surface">#ECE0CD</color>
+    <color name="md_surface_variant">#4E4432</color>
+    <color name="md_on_surface_variant">#D0C1A3</color>
+    <color name="md_outline">#9C8D6F</color>
+
+    <color name="md_error">#F2B8B5</color>
+    <color name="md_on_error">#601410</color>
+
+    <color name="primary">@color/md_primary</color>
+    <color name="primary_dark">@color/md_tertiary</color>
+    <color name="accent">@color/md_tertiary</color>
+    <color name="grid_icon_bg">@color/md_surface_variant</color>
     <color name="card_stroke">#33FFFFFF</color>
+
+    <color name="grid_bg_top">#1C160D</color>
+    <color name="grid_bg_bottom">#332616</color>
+    <color name="poster_scrim">#E0100C06</color>
 </resources>
