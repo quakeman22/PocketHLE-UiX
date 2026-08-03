@@ -15,7 +15,7 @@ import androidx.appcompat.widget.Toolbar
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -82,7 +82,7 @@ class MainActivity : AppCompatActivity() {
         recycler.layoutManager = GridLayoutManager(this, gridSpanCount())
         recycler.adapter = adapter
 
-        findViewById<FloatingActionButton>(R.id.fab_import).setOnClickListener {
+        findViewById<ExtendedFloatingActionButton>(R.id.fab_import).setOnClickListener {
             importGame.launch(arrayOf("application/vnd.ms-cab-compressed", "application/x-rar-compressed", "application/zip", "application/octet-stream", "*/*"))
         }
     }
