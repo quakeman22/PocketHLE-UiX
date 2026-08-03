@@ -40,7 +40,7 @@
 
     <!-- Makes androidx.preference widgets (switches, seekbars, list dialogs)
          pick up the sand Material 3 colors above instead of stock defaults. -->
-    <style name="PreferenceThemeOverlay.PocketHLE" parent="PreferenceThemeOverlay.v14.Material">
+    <style name="PreferenceThemeOverlay.PocketHLE" parent="PreferenceThemeOverlay">
         <item name="preferenceCategoryTitleTextAppearance">@style/TextAppearance.PocketHLE.PreferenceCategory</item>
         <item name="preferenceCategoryStyle">@style/Preference.PocketHLE.Category</item>
     </style>
@@ -51,7 +51,7 @@
         <item name="android:textSize">13sp</item>
     </style>
 
-    <style name="Preference.PocketHLE.Category" parent="Preference.Category.Material">
+    <style name="Preference.PocketHLE.Category" parent="Preference.Category">
         <item name="android:layout">@layout/pref_category_sand</item>
     </style>
 </resources>
