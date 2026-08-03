@@ -15,6 +15,8 @@
     <string name="action_settings">Settings</string>
     <string name="action_remove">Remove</string>
     <string name="action_more">More options</string>
+    <string name="action_choose_cover">Choose cover…</string>
+    <string name="action_reset_cover">Reset to default cover</string>
     <string name="backend_label">Backend: %1$s</string>
     <string name="remove_title">Remove game?</string>
     <string name="remove_message">This will delete %1$s and its extracted files.</string>
@@ -44,6 +46,10 @@
     <string name="soft2_label">2</string>
 
     <!-- Preferences -->
+    <string name="pref_category_emulation">Emulation</string>
+    <string name="pref_category_display">Display</string>
+    <string name="pref_category_library">Library</string>
+    <string name="pref_category_screen">Screen</string>
     <string name="pref_default_backend_title">Default CPU backend</string>
     <string name="pref_default_backend_summary">Used for new games. Stub is safe; Unicorn requires the unicorn build.</string>
     <string name="pref_verbosity_title">Log verbosity</string>

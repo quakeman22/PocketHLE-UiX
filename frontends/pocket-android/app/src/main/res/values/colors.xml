@@ -1,11 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    "Sand" Material 3 palette (light). Warm neutrals with a caramel/
+    terracotta primary, used across launcher + settings.
+-->
 <resources>
-    <color name="primary">#3F51B5</color>
-    <color name="primary_dark">#303F9F</color>
-    <color name="accent">#FF4081</color>
-    <color name="background_light">#FAFAFA</color>
-    <color name="background_dark">#101418</color>
-    <color name="surface_dark">#1B1F24</color>
-    <color name="grid_icon_bg">#EDEDF4</color>
-    <color name="card_stroke">#1F000000</color>
+    <!-- M3 color roles -->
+    <color name="md_primary">#9C6B3E</color>
+    <color name="md_on_primary">#FFFFFF</color>
+    <color name="md_primary_container">#F0DEC0</color>
+    <color name="md_on_primary_container">#3E2A12</color>
+
+    <color name="md_secondary">#7C6A53</color>
+    <color name="md_on_secondary">#FFFFFF</color>
+    <color name="md_secondary_container">#E8DCC6</color>
+    <color name="md_on_secondary_container">#2B2210</color>
+
+    <color name="md_tertiary">#7A4A2A</color>
+    <color name="md_on_tertiary">#FFFFFF</color>
+
+    <color name="md_background">#FBF3E6</color>
+    <color name="md_on_background">#2A2016</color>
+    <color name="md_surface">#FBF3E6</color>
+    <color name="md_on_surface">#2A2016</color>
+    <color name="md_surface_variant">#EAD9BE</color>
+    <color name="md_on_surface_variant">#4E4432</color>
+    <color name="md_outline">#8A7A5F</color>
+
+    <color name="md_error">#B3261E</color>
+    <color name="md_on_error">#FFFFFF</color>
+
+    <!-- Legacy names kept for existing drawables/layouts, now pointing at the sand palette -->
+    <color name="primary">@color/md_primary</color>
+    <color name="primary_dark">@color/md_tertiary</color>
+    <color name="accent">@color/md_tertiary</color>
+    <color name="background_light">@color/md_background</color>
+    <color name="background_dark">#1C160D</color>
+    <color name="surface_dark">#1C160D</color>
+    <color name="grid_icon_bg">@color/md_surface_variant</color>
+    <color name="card_stroke">#26000000</color>
+
+    <!-- Poster grid scrim + gradient background -->
+    <color name="grid_bg_top">#FBF3E6</color>
+    <color name="grid_bg_bottom">#E7CFA6</color>
+    <color name="poster_scrim">#CC1C130A</color>
 </resources>
