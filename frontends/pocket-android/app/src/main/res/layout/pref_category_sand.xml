@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Section header for PreferenceCategory: sand-colored label with extra
+     top spacing so groups of settings read as distinct "cards" of content. -->
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/title"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="20dp"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:paddingBottom="6dp"
+    android:textAppearance="@style/TextAppearance.PocketHLE.PreferenceCategory" />
