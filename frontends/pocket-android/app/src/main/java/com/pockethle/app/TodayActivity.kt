@@ -17,6 +17,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.core.view.doOnLayout
 import androidx.lifecycle.lifecycleScope
+import java.text.SimpleDateFormat
+import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -37,6 +39,7 @@ class TodayActivity : AppCompatActivity() {
     private lateinit var gamesAdapter: FavoritesAdapter
     private lateinit var favoritesList: RecyclerView
     private lateinit var favoritesEmpty: TextView
+    private lateinit var clock: TextView
     private lateinit var statusLine: TextView
     private lateinit var ownerText: TextView
     private lateinit var programsText: TextView
@@ -55,6 +58,7 @@ class TodayActivity : AppCompatActivity() {
         setContentView(R.layout.activity_today)
 
         rootDir = LibraryPaths.root(this)
+        clock = findViewById(R.id.clock)
         statusLine = findViewById(R.id.status_line)
         ownerText = findViewById(R.id.owner_text)
         programsText = findViewById(R.id.programs_text)
@@ -98,7 +102,12 @@ class TodayActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        updateClock()
         refresh()
+    }
+
+    private fun updateClock() {
+        clock.text = SimpleDateFormat("HH:mm", Locale.getDefault()).format(java.util.Date())
     }
 
     private fun allGames(): List<GameEntry> {
