@@ -67,17 +67,31 @@
                 android:background="@drawable/bg_xp_panel"
                 android:orientation="vertical">
 
-                <TextView
-                    android:id="@+id/status_line"
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:paddingHorizontal="12dp"
-                    android:paddingTop="10dp"
-                    android:paddingBottom="8dp"
-                    android:textColor="@color/xp_row_text"
-                    android:textSize="13sp"
-                    android:textStyle="bold"
-                    tools:text="quarta-feira, agosto 5, 2026&#10;PocketHLE — 0 game(s) in library" />
+                    android:layout_height="44dp"
+                    android:background="@drawable/bg_xp_row"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="12dp">
+
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:contentDescription="@null"
+                        android:src="@drawable/ic_today_calendar" />
+
+                    <TextView
+                        android:id="@+id/status_line"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:layout_weight="1"
+                        android:textColor="@color/xp_row_text"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        tools:text="quarta-feira, agosto 5, 2026" />
+                </LinearLayout>
 
                 <View
                     android:layout_width="match_parent"
@@ -110,105 +124,6 @@
                         android:text="@string/today_owner_hint"
                         android:textColor="@color/xp_row_text"
                         android:textSize="13sp" />
-                </LinearLayout>
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:background="#A4B6C9" />
-
-                <LinearLayout
-                    android:id="@+id/calendar_row"
-                    android:layout_width="match_parent"
-                    android:layout_height="44dp"
-                    android:background="@drawable/bg_xp_row"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:paddingHorizontal="12dp">
-
-                    <ImageView
-                        android:layout_width="18dp"
-                        android:layout_height="18dp"
-                        android:contentDescription="@null"
-                        android:src="@drawable/ic_today_calendar" />
-
-                    <TextView
-                        android:id="@+id/calendar_text"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="10dp"
-                        android:layout_weight="1"
-                        android:textColor="@color/xp_row_text"
-                        android:textSize="13sp"
-                        tools:text="No upcoming appointments" />
-                </LinearLayout>
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:background="#A4B6C9" />
-
-                <LinearLayout
-                    android:id="@+id/messages_row"
-                    android:layout_width="match_parent"
-                    android:layout_height="44dp"
-                    android:background="@drawable/bg_xp_row"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:paddingHorizontal="12dp">
-
-                    <ImageView
-                        android:layout_width="18dp"
-                        android:layout_height="18dp"
-                        android:contentDescription="@null"
-                        android:src="@drawable/ic_info" />
-
-                    <TextView
-                        android:id="@+id/messages_text"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="10dp"
-                        android:layout_weight="1"
-                        android:textColor="@color/xp_row_text"
-                        android:textSize="13sp"
-                        tools:text="No unread messages" />
-                </LinearLayout>
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:background="#A4B6C9" />
-
-                <LinearLayout
-                    android:id="@+id/tasks_row"
-                    android:layout_width="match_parent"
-                    android:layout_height="44dp"
-                    android:background="@drawable/bg_xp_row"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:paddingHorizontal="12dp">
-
-                    <ImageView
-                        android:layout_width="18dp"
-                        android:layout_height="18dp"
-                        android:contentDescription="@null"
-                        android:src="@drawable/ic_add" />
-
-                    <TextView
-                        android:id="@+id/tasks_text"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="10dp"
-                        android:layout_weight="1"
-                        android:textColor="@color/xp_row_text"
-                        android:textSize="13sp"
-                        tools:text="No tasks" />
                 </LinearLayout>
 
                 <View
