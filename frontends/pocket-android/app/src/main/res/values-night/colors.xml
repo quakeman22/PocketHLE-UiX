@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Dark Pocket PC-inspired palette. -->
 <resources>
-    <color name="md_primary">#89A6CF</color>
+    <color name="md_primary">#7AA6D8</color>
     <color name="md_on_primary">#0F2140</color>
     <color name="md_primary_container">#1C3154</color>
     <color name="md_on_primary_container">#DCE6F3</color>
@@ -34,4 +34,12 @@
     <color name="grid_bg_top">#18283D</color>
     <color name="grid_bg_bottom">#223651</color>
     <color name="poster_scrim">#CC0E1C31</color>
+
+    <color name="xp_title_start">#1E4E95</color>
+    <color name="xp_title_end">#12396D</color>
+    <color name="xp_start_start">#5D9E36</color>
+    <color name="xp_start_end">#3A7B1C</color>
+    <color name="xp_panel_fill">#20344B</color>
+    <color name="xp_row_fill">#22364B</color>
+    <color name="xp_row_alt_fill">#1D3145</color>
 </resources>
