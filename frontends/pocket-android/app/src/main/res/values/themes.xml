@@ -28,7 +28,7 @@
         <item name="android:statusBarColor" tools:targetApi="21">@color/md_tertiary</item>
         <item name="android:windowLightStatusBar" tools:targetApi="23">false</item>
         <item name="android:navigationBarColor" tools:targetApi="27">@color/md_background</item>
-        <item name="android:windowBackground">@drawable/bg_launcher_gradient</item>
+        <item name="android:windowBackground">@drawable/bg_novo</item>
 
         <item name="preferenceTheme">@style/PreferenceThemeOverlay.PocketHLE</item>
     </style>

@@ -27,6 +27,10 @@
     <string name="today_softkey_games">Programs</string>
     <string name="today_softkey_start">Start</string>
     <string name="today_install_cab">Install .CAB</string>
+    <string name="today_calendar_line">No upcoming appointments</string>
+    <string name="today_messages_line">No unread messages</string>
+    <string name="today_tasks_line">No tasks</string>
+    <string name="today_programs_line">PocketHLE — %1$d game(s) in library</string>
     <string name="main_softkey_today">Today</string>
     <string name="main_softkey_import">Install .CAB</string>
     <string name="today_menu_settings">Settings</string>
@@ -35,6 +39,8 @@
     <string name="today_tap_to_play">Tap to play</string>
     <string name="today_add_favorite">Add favorite</string>
     <string name="today_owner_hint">Tap here to set owner information</string>
+    <string name="today_owner_dialog_title">Owner information</string>
+    <string name="today_owner_dialog_hint">Enter any text here</string>
     <string name="import_failed_title">Import failed</string>
     <string name="backend_label">Backend: %1$s</string>
     <string name="remove_title">Remove game?</string>
