@@ -1045,6 +1045,10 @@ pub struct GuestThread {
     /// window queue (`KernelState::posted_messages`) belongs to the
     /// main thread only.
     pub messages: std::collections::VecDeque<(u32, u32, u32)>,
+    /// Cooperative suspend count used by `SuspendThread` /
+    /// `ResumeThread`. A non-zero value keeps the thread from being
+    /// scheduled by the HLE worker switcher.
+    pub suspend_count: u32,
     pub saved_regs: [u32; 17],
     pub worker_regs: [u32; 17],
     pub worker_saved: bool,
@@ -1073,6 +1077,7 @@ impl GuestThread {
             handle,
             id: 0,
             messages: std::collections::VecDeque::new(),
+            suspend_count: 0,
             saved_regs,
             worker_regs: [0; 17],
             worker_saved: false,
