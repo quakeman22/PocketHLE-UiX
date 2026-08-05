@@ -7604,8 +7604,9 @@ fn parse_pcm_wave(bytes: &[u8]) -> Option<(pocket_kernel::audio::GuestFormat, &[
 const OSVERSIONINFOW_BYTES: u32 = 4 + 4 * 4 + 128 * 2;
 
 /// `BOOL GetVersionExW(LPOSVERSIONINFOW lpVersionInformation)`.
-/// Reports Windows CE 4.20 (Pocket PC 2003 / PPC2003), which is
-/// what every Pocket PC 2002–2003 game we target was built for.
+/// Reports either the Pocket PC 2003 baseline or a Windows Mobile 6
+/// Standard smartphone identity, depending on the active device
+/// profile.
 fn get_version_ex_w(ctx: &mut CallCtx<'_>) -> Result<DispatchOutcome, KernelError> {
     let p = ctx.arg_u32(0)?;
     if p == 0 {
@@ -7624,20 +7625,31 @@ fn get_version_ex_w(ctx: &mut CallCtx<'_>) -> Result<DispatchOutcome, KernelErro
     } else {
         cb.max(20)
     };
+    let (major, minor, build, csd) = ctx.kernel.device_profile.version_triplet();
     let mut buf = vec![0u8; want as usize];
     buf[0..4].copy_from_slice(&want.to_le_bytes());
-    buf[4..8].copy_from_slice(&4u32.to_le_bytes());
-    buf[8..12].copy_from_slice(&20u32.to_le_bytes());
-    buf[12..16].copy_from_slice(&1081u32.to_le_bytes());
+    buf[4..8].copy_from_slice(&major.to_le_bytes());
+    buf[8..12].copy_from_slice(&minor.to_le_bytes());
+    buf[12..16].copy_from_slice(&build.to_le_bytes());
     buf[16..20].copy_from_slice(&3u32.to_le_bytes());
+    if want as usize > 20 {
+        let csd_utf16: Vec<u16> = csd.encode_utf16().collect();
+        let max_chars = (want as usize - 20) / 2;
+        for (i, ch) in csd_utf16.into_iter().take(max_chars.saturating_sub(1)).enumerate() {
+            let off = 20 + i * 2;
+            buf[off..off + 2].copy_from_slice(&ch.to_le_bytes());
+        }
+    }
     ctx.cpu.write_mem(p, &buf)?;
     Ok(DispatchOutcome::ReturnedR0(1))
 }
 
-/// `DWORD GetVersion()` — packed legacy form. Hi word = major.minor
-/// (0x0414 == 4.20), low word = build (1081).
-fn get_version(_ctx: &mut CallCtx<'_>) -> Result<DispatchOutcome, KernelError> {
-    Ok(DispatchOutcome::ReturnedR0(0x0439_1404))
+/// `DWORD GetVersion()` — packed legacy form. Hi word = build, low
+/// word = major.minor (for example `0x0439_0414` for CE 4.20 build
+/// 1081).
+fn get_version(ctx: &mut CallCtx<'_>) -> Result<DispatchOutcome, KernelError> {
+    let (major, minor, build, _) = ctx.kernel.device_profile.version_triplet();
+    Ok(DispatchOutcome::ReturnedR0((build << 16) | ((major << 8) | minor)))
 }
 
 fn invalidate_rect(ctx: &mut CallCtx<'_>) -> Result<DispatchOutcome, KernelError> {
@@ -11332,7 +11344,9 @@ mod tests {
         KernelState {
             heap: Heap::new(0x5000_0000, 0x10000),
             vfs: Vfs::new(),
-            registry: pocket_kernel::registry::Registry::new(),
+            registry: pocket_kernel::registry::Registry::with_device_defaults(
+                pocket_kernel::DeviceProfile::default(),
+            ),
             find_handles: std::collections::HashMap::new(),
             next_find_handle: 0,
             module_path: "\\Program Files\\Game\\Game.exe".to_string(),
@@ -11357,6 +11371,7 @@ mod tests {
             gx_guest_signature: None,
             synthetic_message_count: 0,
             synthetic_message_budget: 0,
+            device_profile: pocket_kernel::DeviceProfile::default(),
             wnd_proc: 0,
             window_class_procs: std::collections::HashMap::new(),
             window_background: None,

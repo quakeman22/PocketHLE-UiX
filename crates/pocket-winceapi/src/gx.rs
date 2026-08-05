@@ -266,7 +266,9 @@ mod tests {
         KernelState {
             heap: Heap::new(0x5000_0000, 0x10000),
             vfs: Vfs::new(),
-            registry: pocket_kernel::registry::Registry::new(),
+            registry: pocket_kernel::registry::Registry::with_device_defaults(
+                pocket_kernel::DeviceProfile::default(),
+            ),
             find_handles: std::collections::HashMap::new(),
             next_find_handle: 0,
             module_path: "\\Program Files\\Game\\Game.exe".to_string(),
@@ -291,6 +293,7 @@ mod tests {
             gx_guest_signature: None,
             synthetic_message_count: 0,
             synthetic_message_budget: 0,
+            device_profile: pocket_kernel::DeviceProfile::default(),
             wnd_proc: 0,
             window_class_procs: std::collections::HashMap::new(),
             window_background: None,
