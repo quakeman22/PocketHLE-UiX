@@ -79,7 +79,10 @@ pub fn register(d: &mut WinCeDispatcher) {
     // ---- Process / module / library ----
     d.register_handler(dll, "GetTickCount", get_tick_count);
     d.register_handler(dll, "Sleep", sleep);
+    d.register_handler(dll, "SuspendThread", suspend_thread);
     d.register_handler(dll, "ResumeThread", resume_thread);
+    d.register_handler(dll, "GetThreadContext", get_thread_context);
+    d.register_handler(dll, "SetThreadContext", set_thread_context);
     d.register_handler(dll, "ExitProcess", exit_process);
     d.register_handler(dll, "TerminateProcess", exit_process);
     d.register_constant(dll, "GetLastError", 0, zero_returning);
@@ -1527,6 +1530,93 @@ fn current_thread_id(ctx: &CallCtx<'_>) -> u32 {
     }
 }
 
+fn thread_index_for_handle(ctx: &CallCtx<'_>, handle: u32) -> Option<usize> {
+    if handle == FAKE_CURRENT_THREAD_HANDLE {
+        return ctx.kernel.current_thread.checked_sub(1);
+    }
+    ctx.kernel
+        .threads
+        .iter()
+        .position(|thread| thread.handle == handle && !thread.finished)
+}
+
+fn thread_regs_for_handle(ctx: &mut CallCtx<'_>, handle: u32) -> Result<Option<[u32; 17]>, KernelError> {
+    if handle == FAKE_CURRENT_THREAD_HANDLE && ctx.kernel.current_thread == 0 {
+        return read_guest_regs(ctx.cpu).map(Some);
+    }
+    let Some(index) = thread_index_for_handle(ctx, handle) else {
+        return Ok(None);
+    };
+    let (worker_saved, started, worker_regs, saved_regs) = {
+        let thread = &ctx.kernel.threads[index];
+        (
+            thread.worker_saved,
+            thread.started,
+            thread.worker_regs,
+            thread.saved_regs,
+        )
+    };
+    if worker_saved {
+        Ok(Some(worker_regs))
+    } else if started {
+        read_guest_regs(ctx.cpu).map(Some)
+    } else {
+        Ok(Some(saved_regs))
+    }
+}
+
+fn write_thread_regs(ctx: &mut CallCtx<'_>, handle: u32, regs: &[u32; 17]) -> Result<bool, KernelError> {
+    if handle == FAKE_CURRENT_THREAD_HANDLE {
+        write_guest_regs(ctx.cpu, regs)?;
+        if ctx.kernel.current_thread == 0 {
+            return Ok(true);
+        }
+    }
+    let Some(index) = thread_index_for_handle(ctx, handle) else {
+        return Ok(false);
+    };
+    if let Some(thread) = ctx.kernel.threads.get_mut(index) {
+        thread.saved_regs = *regs;
+        thread.worker_regs = *regs;
+        thread.worker_saved = true;
+        thread.started = thread.suspend_count == 0;
+        return Ok(true);
+    }
+    Ok(false)
+}
+
+const ARM_CONTEXT_BLOB_BYTES: usize = 72;
+
+fn write_arm_context_blob(
+    cpu: &mut dyn pocket_cpu::Cpu,
+    context_ptr: u32,
+    flags: u32,
+    regs: &[u32; 17],
+) -> Result<(), KernelError> {
+    let mut blob = [0u8; ARM_CONTEXT_BLOB_BYTES];
+    blob[0..4].copy_from_slice(&flags.to_le_bytes());
+    for (index, value) in regs.iter().enumerate() {
+        let off = 4 + index * 4;
+        blob[off..off + 4].copy_from_slice(&value.to_le_bytes());
+    }
+    cpu.write_mem(context_ptr, &blob)?;
+    Ok(())
+}
+
+fn read_arm_context_blob(
+    cpu: &mut dyn pocket_cpu::Cpu,
+    context_ptr: u32,
+) -> Result<(u32, [u32; 17]), KernelError> {
+    let raw = cpu.read_mem(context_ptr, ARM_CONTEXT_BLOB_BYTES as u32)?;
+    let flags = u32::from_le_bytes([raw[0], raw[1], raw[2], raw[3]]);
+    let mut regs = [0u32; 17];
+    for (index, slot) in regs.iter_mut().enumerate() {
+        let off = 4 + index * 4;
+        *slot = u32::from_le_bytes([raw[off], raw[off + 1], raw[off + 2], raw[off + 3]]);
+    }
+    Ok((flags, regs))
+}
+
 /// Park the running worker so that its blocking call is *retried* when
 /// it next gets the CPU, instead of returning a value it never saw a
 /// message for.
@@ -1649,15 +1739,17 @@ fn sleep(ctx: &mut CallCtx<'_>) -> Result<DispatchOutcome, KernelError> {
 
 fn resume_thread(ctx: &mut CallCtx<'_>) -> Result<DispatchOutcome, KernelError> {
     let handle = ctx.arg_u32(0)?;
-    let thread_index = ctx
-        .kernel
-        .threads
-        .iter()
-        .position(|thread| thread.handle == handle && !thread.finished);
-    if let Some(index) = thread_index {
-        ctx.kernel.threads[index].started = true;
-        log::debug!("ResumeThread(0x{handle:08x}) -> 0");
-        return Ok(DispatchOutcome::ReturnedR0(0));
+    if let Some(index) = thread_index_for_handle(ctx, handle) {
+        let thread = &mut ctx.kernel.threads[index];
+        let prev = thread.suspend_count;
+        if thread.suspend_count > 0 {
+            thread.suspend_count -= 1;
+        }
+        if thread.suspend_count == 0 {
+            thread.started = true;
+        }
+        log::debug!("ResumeThread(0x{handle:08x}) -> {}", prev);
+        return Ok(DispatchOutcome::ReturnedR0(prev));
     }
     if handle == 0xDEAD_E102 {
         log::debug!("ResumeThread(simulated child 0x{handle:08x}) -> 0");
@@ -1665,6 +1757,55 @@ fn resume_thread(ctx: &mut CallCtx<'_>) -> Result<DispatchOutcome, KernelError> 
     }
     log::debug!("ResumeThread(0x{handle:08x}) -> -1");
     Ok(DispatchOutcome::ReturnedR0(0xffff_ffff))
+}
+
+fn suspend_thread(ctx: &mut CallCtx<'_>) -> Result<DispatchOutcome, KernelError> {
+    let handle = ctx.arg_u32(0)?;
+    if let Some(index) = thread_index_for_handle(ctx, handle) {
+        let thread = &mut ctx.kernel.threads[index];
+        let prev = thread.suspend_count;
+        thread.suspend_count = thread.suspend_count.saturating_add(1);
+        thread.started = false;
+        log::debug!("SuspendThread(0x{handle:08x}) -> {}", prev);
+        return Ok(DispatchOutcome::ReturnedR0(prev));
+    }
+    if handle == FAKE_CURRENT_THREAD_HANDLE {
+        log::debug!("SuspendThread(current) -> 0");
+        return Ok(DispatchOutcome::ReturnedR0(0));
+    }
+    log::debug!("SuspendThread(0x{handle:08x}) -> -1");
+    Ok(DispatchOutcome::ReturnedR0(0xffff_ffff))
+}
+
+fn get_thread_context(ctx: &mut CallCtx<'_>) -> Result<DispatchOutcome, KernelError> {
+    let handle = ctx.arg_u32(0)?;
+    let context_ptr = ctx.arg_u32(1)?;
+    if context_ptr == 0 {
+        return Ok(DispatchOutcome::ReturnedR0(0));
+    }
+    let flags = ctx.cpu.read_u32_le(context_ptr).unwrap_or(0x0000_003f);
+    let Some(regs) = thread_regs_for_handle(ctx, handle)? else {
+        return Ok(DispatchOutcome::ReturnedR0(0));
+    };
+    if write_arm_context_blob(ctx.cpu, context_ptr, flags, &regs).is_err() {
+        return Ok(DispatchOutcome::ReturnedR0(0));
+    }
+    Ok(DispatchOutcome::ReturnedR0(1))
+}
+
+fn set_thread_context(ctx: &mut CallCtx<'_>) -> Result<DispatchOutcome, KernelError> {
+    let handle = ctx.arg_u32(0)?;
+    let context_ptr = ctx.arg_u32(1)?;
+    if context_ptr == 0 {
+        return Ok(DispatchOutcome::ReturnedR0(0));
+    }
+    let Ok((_flags, regs)) = read_arm_context_blob(ctx.cpu, context_ptr) else {
+        return Ok(DispatchOutcome::ReturnedR0(0));
+    };
+    if write_thread_regs(ctx, handle, &regs)? {
+        return Ok(DispatchOutcome::ReturnedR0(1));
+    }
+    Ok(DispatchOutcome::ReturnedR0(0))
 }
 
 fn exit_process(_ctx: &mut CallCtx<'_>) -> Result<DispatchOutcome, KernelError> {
@@ -8005,6 +8146,7 @@ fn create_thread(ctx: &mut CallCtx<'_>) -> Result<DispatchOutcome, KernelError> 
         // the entry point straight away makes it read uninitialised
         // fields and bail out. Park it at its entry point instead and
         // let `ResumeThread` release it.
+        thread.suspend_count = 1;
         let mut worker_regs = [0u32; 17];
         worker_regs[0] = parameter;
         worker_regs[13] = stack_top - 16;

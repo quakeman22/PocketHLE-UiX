@@ -163,8 +163,9 @@ fn sh_create_menu_bar(ctx: &mut CallCtx<'_>) -> Result<DispatchOutcome, KernelEr
         _ => &[0x18, 0x1c],
     };
     for off in offsets {
-        ctx.cpu
-            .write_mem(pmb + off, &FAKE_MENUBAR_HWND.to_le_bytes())?;
+        let _ = ctx
+            .cpu
+            .write_mem(pmb + off, &FAKE_MENUBAR_HWND.to_le_bytes());
     }
     log::debug!("SHCreateMenuBar(cbSize={cb_size}) -> hwndMB=0x{FAKE_MENUBAR_HWND:08x}");
     Ok(DispatchOutcome::ReturnedR0(1))
