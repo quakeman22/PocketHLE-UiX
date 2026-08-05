@@ -40,83 +40,161 @@
                 android:layout_height="wrap_content"
                 android:textColor="@color/md_on_primary"
                 android:textStyle="bold"
-                tools:text="11:34" />
+                tools:text="09:29" />
         </LinearLayout>
-
-        <TextView
-            android:id="@+id/status_line"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingHorizontal="12dp"
-            android:paddingTop="8dp"
-            android:paddingBottom="4dp"
-            android:textColor="?attr/colorOnBackground"
-            android:textSize="13sp"
-            tools:text="Tuesday, December 19, 2006" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_marginHorizontal="8dp"
             android:layout_weight="1"
-            android:background="@drawable/bg_xp_panel"
             android:orientation="vertical"
-            android:padding="0dp">
+            android:padding="8dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:padding="8dp">
+                android:background="@drawable/bg_xp_panel"
+                android:orientation="vertical"
+                android:padding="0dp">
 
                 <TextView
-                    android:layout_width="0dp"
+                    android:id="@+id/status_line"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/nav_favorites"
-                    android:textColor="@color/md_on_surface"
-                    android:textStyle="bold" />
+                    android:paddingHorizontal="12dp"
+                    android:paddingTop="10dp"
+                    android:paddingBottom="8dp"
+                    android:textColor="@color/xp_row_text"
+                    android:textSize="13sp"
+                    tools:text="quarta-feira, agosto 5, 2026&#10;PocketHLE — 0 game(s) in library" />
 
-                <ImageButton
-                    android:id="@+id/btn_add_favorite"
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
-                    android:background="@drawable/bg_card_overflow"
-                    android:contentDescription="@string/today_add_favorite"
-                    android:padding="3dp"
-                    android:src="@drawable/ic_add"
-                    android:tint="@color/md_on_surface" />
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#A4B6C9" />
+
+                <LinearLayout
+                    android:id="@+id/btn_install_cab"
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:background="@drawable/bg_xp_row"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="12dp">
+
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:contentDescription="@null"
+                        android:src="@drawable/ic_add"
+                        android:tint="@color/xp_row_text" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:text="@string/today_install_cab"
+                        android:textColor="@color/xp_row_text"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#A4B6C9" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="8dp">
+
+                    <ImageView
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:contentDescription="@null"
+                        android:src="@drawable/ic_info"
+                        android:tint="@color/xp_row_subtext" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:layout_weight="1"
+                        android:text="@string/today_owner_hint"
+                        android:textColor="@color/xp_row_subtext"
+                        android:textSize="12sp" />
+                </LinearLayout>
             </LinearLayout>
 
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="#A2B5D0" />
-
-            <FrameLayout
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
-                android:layout_weight="1">
+                android:layout_marginTop="8dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_xp_panel"
+                android:orientation="vertical"
+                android:padding="0dp">
 
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/favorites_list"
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:clipToPadding="false"
-                    android:padding="8dp"
-                    android:paddingBottom="12dp"
-                    tools:listitem="@layout/item_favorite_row" />
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:padding="8dp">
 
-                <TextView
-                    android:id="@+id/favorites_empty"
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/nav_favorites"
+                        android:textColor="@color/xp_row_text"
+                        android:textStyle="bold" />
+
+                    <ImageButton
+                        android:id="@+id/btn_add_favorite"
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:background="@drawable/bg_card_overflow"
+                        android:contentDescription="@string/today_add_favorite"
+                        android:padding="3dp"
+                        android:src="@drawable/ic_add"
+                        android:tint="@color/xp_row_text" />
+                </LinearLayout>
+
+                <View
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:padding="24dp"
-                    android:text="@string/today_no_favorites"
-                    android:textColor="?attr/colorOnSurfaceVariant"
-                    android:visibility="gone" />
-            </FrameLayout>
+                    android:layout_height="1dp"
+                    android:background="#A4B6C9" />
+
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1">
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/favorites_list"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:clipToPadding="false"
+                        android:padding="8dp"
+                        android:paddingBottom="12dp"
+                        tools:listitem="@layout/item_favorite_row" />
+
+                    <TextView
+                        android:id="@+id/favorites_empty"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:padding="24dp"
+                        android:text="@string/today_no_favorites"
+                        android:textColor="@color/xp_row_subtext"
+                        android:visibility="gone" />
+                </FrameLayout>
+            </LinearLayout>
         </LinearLayout>
 
         <LinearLayout
@@ -157,7 +235,7 @@
         android:id="@+id/start_scrim"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#660F2140"
+        android:background="#3305336E"
         android:clickable="true"
         android:focusable="true"
         android:visibility="gone" />
