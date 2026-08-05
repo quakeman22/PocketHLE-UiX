@@ -311,15 +311,41 @@
         </LinearLayout>
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/status"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="?attr/colorSurface"
-        android:fontFamily="monospace"
-        android:maxLines="6"
-        android:padding="8dp"
-        android:scrollbars="vertical"
-        android:textColor="?android:attr/textColorPrimary"
-        android:textSize="12sp" />
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="8dp">
+
+        <TextView
+            android:id="@+id/status"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:fontFamily="monospace"
+            android:maxLines="2"
+            android:ellipsize="end"
+            android:paddingEnd="8dp"
+            android:textColor="?android:attr/textColorPrimary"
+            android:textSize="12sp" />
+
+        <Button
+            android:id="@+id/btn_log"
+            style="@null"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_wm_button"
+            android:backgroundTint="@null"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="10dp"
+            android:stateListAnimator="@null"
+            android:text="@string/game_log_button"
+            android:textAllCaps="false"
+            android:textColor="#10233E"
+            android:textSize="14sp" />
+    </LinearLayout>
 </LinearLayout>
