@@ -653,7 +653,10 @@ pub struct KernelState {
     /// frames, so headless runs don't loop forever.
     pub synthetic_message_count: u64,
     /// Maximum synthetic frame messages to inject. `0` means
-    /// unlimited.
+    /// unlimited. Frontends that run the full emulator UI already
+    /// set this to `0`; keeping the default unlimited avoids
+    /// truncating long splash-screen / init sequences on titles
+    /// that need more than a few hundred message pump iterations.
     pub synthetic_message_budget: u64,
     /// Address of the guest's last-registered window procedure. Set
     /// by `RegisterClassW`, used by `DispatchMessageW` to trampoline
@@ -1634,7 +1637,7 @@ impl Process {
                 gx_last_pushed_counter: 0,
                 gx_guest_signature: None,
                 synthetic_message_count: 0,
-                synthetic_message_budget: 240,
+                synthetic_message_budget: 0,
                 wnd_proc: 0,
                 window_class_procs: HashMap::new(),
                 window_background: None,
