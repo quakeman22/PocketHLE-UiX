@@ -1,10 +1,13 @@
 package com.pockethle.app
 
 import android.content.Intent
+import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
+import android.text.InputType
 import android.view.View
+import android.widget.EditText
 import android.widget.TextView
 import androidx.activity.addCallback
 import androidx.activity.result.contract.ActivityResultContracts
@@ -27,6 +30,10 @@ import kotlinx.coroutines.withContext
  */
 class TodayActivity : AppCompatActivity() {
 
+    private val prefs: SharedPreferences by lazy {
+        getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+    }
+
     private lateinit var rootDir: String
     private lateinit var favoritesAdapter: FavoritesAdapter
     private lateinit var gamesAdapter: FavoritesAdapter
@@ -34,6 +41,11 @@ class TodayActivity : AppCompatActivity() {
     private lateinit var favoritesEmpty: TextView
     private lateinit var clock: TextView
     private lateinit var statusLine: TextView
+    private lateinit var ownerText: TextView
+    private lateinit var calendarText: TextView
+    private lateinit var messagesText: TextView
+    private lateinit var tasksText: TextView
+    private lateinit var programsText: TextView
     private lateinit var startPanel: View
     private lateinit var startScrim: View
     private var startPanelOpen = false
@@ -51,6 +63,11 @@ class TodayActivity : AppCompatActivity() {
         rootDir = LibraryPaths.root(this)
         clock = findViewById(R.id.clock)
         statusLine = findViewById(R.id.status_line)
+        ownerText = findViewById(R.id.owner_text)
+        calendarText = findViewById(R.id.calendar_text)
+        messagesText = findViewById(R.id.messages_text)
+        tasksText = findViewById(R.id.tasks_text)
+        programsText = findViewById(R.id.programs_text)
         favoritesList = findViewById(R.id.favorites_list)
         favoritesEmpty = findViewById(R.id.favorites_empty)
         startPanel = findViewById(R.id.start_panel)
@@ -73,9 +90,14 @@ class TodayActivity : AppCompatActivity() {
             toggleStartPanel()
         }
         startScrim.setOnClickListener { closeStartPanel() }
-        findViewById<View>(R.id.btn_install_cab).setOnClickListener {
-            importGame.launch(arrayOf("application/vnd.ms-cab-compressed", "application/x-rar-compressed", "application/zip", "application/octet-stream", "*/*"))
-        }
+        findViewById<View>(R.id.btn_install_cab).setOnClickListener { openImportPicker() }
+        findViewById<View>(R.id.owner_row).setOnClickListener { editOwnerInfo() }
+        findViewById<View>(R.id.calendar_row).setOnClickListener { launchLibrary() }
+        findViewById<View>(R.id.messages_row).setOnClickListener { launchLibrary() }
+        findViewById<View>(R.id.tasks_row).setOnClickListener { launchLibrary() }
+        findViewById<View>(R.id.programs_row).setOnClickListener { launchLibrary() }
+        findViewById<View>(R.id.settings_row).setOnClickListener { openSettings() }
+        findViewById<View>(R.id.about_row).setOnClickListener { showAboutDialog() }
         findViewById<View>(R.id.btn_add_favorite).setOnClickListener { showAddFavoritesDialog() }
 
         onBackPressedDispatcher.addCallback(this) {
@@ -120,6 +142,13 @@ class TodayActivity : AppCompatActivity() {
 
         val dateStr = SimpleDateFormat("EEEE, MMMM d, yyyy", Locale.getDefault()).format(java.util.Date())
         statusLine.text = "$dateStr\n${getString(R.string.today_owner_line, games.size)}"
+        ownerText.text = prefs.getString(KEY_OWNER_TEXT, null)
+            ?.takeIf { it.isNotBlank() }
+            ?: getString(R.string.today_owner_hint)
+        calendarText.text = getString(R.string.today_calendar_line)
+        messagesText.text = getString(R.string.today_messages_line)
+        tasksText.text = getString(R.string.today_tasks_line)
+        programsText.text = getString(R.string.today_programs_line, games.size)
     }
 
     private fun showAddFavoritesDialog() {
@@ -175,6 +204,59 @@ class TodayActivity : AppCompatActivity() {
                 },
             )
         }
+    }
+
+    private fun openImportPicker() {
+        importGame.launch(
+            arrayOf(
+                "application/vnd.ms-cab-compressed",
+                "application/x-rar-compressed",
+                "application/zip",
+                "application/octet-stream",
+                "*/*",
+            ),
+        )
+    }
+
+    private fun editOwnerInfo() {
+        val input = EditText(this).apply {
+            setText(prefs.getString(KEY_OWNER_TEXT, "") ?: "")
+            hint = getString(R.string.today_owner_dialog_hint)
+            inputType = InputType.TYPE_CLASS_TEXT or
+                InputType.TYPE_TEXT_FLAG_CAP_SENTENCES or
+                InputType.TYPE_TEXT_FLAG_MULTI_LINE
+            setLines(2)
+            minLines = 1
+        }
+        AlertDialog.Builder(this)
+            .setTitle(R.string.today_owner_dialog_title)
+            .setView(input)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                prefs.edit().putString(KEY_OWNER_TEXT, input.text?.toString()?.trim().orEmpty()).apply()
+                refresh()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun openSettings() {
+        startActivity(Intent(this, SettingsActivity::class.java))
+    }
+
+    private fun showAboutDialog() {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.about_title)
+            .setMessage(NativeBridge.banner())
+            .setPositiveButton(android.R.string.ok, null)
+            .show()
+    }
+
+    private fun launchLibrary() {
+        startActivity(
+            Intent(this, MainActivity::class.java).addFlags(
+                Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP,
+            ),
+        )
     }
 
     private fun importArchiveOrExe(file: java.io.File): String {
@@ -257,5 +339,10 @@ class TodayActivity : AppCompatActivity() {
                 .putExtra(GameActivity.EXTRA_GAME_ID, entry.id)
                 .putExtra(GameActivity.EXTRA_GAME_NAME, entry.displayName),
         )
+    }
+
+    companion object {
+        private const val PREFS_NAME = "today_screen"
+        private const val KEY_OWNER_TEXT = "owner_text"
     }
 }
