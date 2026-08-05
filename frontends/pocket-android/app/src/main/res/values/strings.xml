@@ -47,6 +47,14 @@
     <string name="remove_message">This will delete %1$s and its extracted files.</string>
     <string name="remove">Remove</string>
     <string name="run_failed_no_id">No game id supplied.</string>
+    <string name="game_log_button">Log</string>
+    <string name="game_log_title">Execution log</string>
+    <string name="game_log_copy">Copy</string>
+    <string name="game_log_close">Close</string>
+    <string name="game_log_empty">No log available yet.</string>
+    <string name="game_log_copied">Log copied to clipboard</string>
+    <string name="game_log_running">Game still running. This shows the latest status only.</string>
+    <string name="game_log_ready">Session finished. Tap Log to view details.</string>
     <string name="menu_settings">Settings</string>
     <string name="menu_about">About</string>
 
