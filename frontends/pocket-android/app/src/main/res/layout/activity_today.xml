@@ -70,7 +70,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="@string/nav_favorites"
-                android:textColor="@color/md_primary"
+                android:textColor="@color/md_on_surface"
                 android:textStyle="bold" />
 
             <ImageButton
@@ -81,7 +81,7 @@
                 android:contentDescription="@string/today_add_favorite"
                 android:padding="3dp"
                 android:src="@drawable/ic_add"
-                android:tint="@color/md_primary" />
+                android:tint="@color/md_on_surface" />
         </LinearLayout>
 
         <View
@@ -136,14 +136,14 @@
                 android:layout_height="16dp"
                 android:contentDescription="@null"
                 android:src="@drawable/ic_game"
-                android:tint="@color/md_tertiary" />
+                android:tint="@color/md_on_surface" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="6dp"
                 android:text="@string/today_softkey_games"
-                android:textColor="@color/md_tertiary"
+                android:textColor="@color/md_on_surface"
                 android:textStyle="bold" />
         </LinearLayout>
 
@@ -168,14 +168,14 @@
                 android:layout_height="16dp"
                 android:contentDescription="@null"
                 android:src="@drawable/ic_start_flag"
-                android:tint="@color/md_tertiary" />
+                android:tint="@color/md_on_surface" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="6dp"
                 android:text="@string/today_softkey_start"
-                android:textColor="@color/md_tertiary"
+                android:textColor="@color/md_on_surface"
                 android:textStyle="bold" />
         </LinearLayout>
     </LinearLayout>
