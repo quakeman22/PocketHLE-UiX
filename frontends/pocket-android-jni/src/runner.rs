@@ -51,6 +51,7 @@ use std::time::{Duration, Instant};
 
 use anyhow::Context;
 use pocket_core::kernel::{FrameAction, FrameHook, InputEvent, KernelState};
+use pocket_core::kernel::DeviceProfile;
 use pocket_core::Emulator;
 use pocket_library::{CpuBackendPref, GameEntry, Library};
 
@@ -245,6 +246,8 @@ fn run_game_to_completion(
         .map(|image| image.machine)
         .unwrap_or(pocket_core::pe::machine::ARM);
     summary_lines.push(format!("Executable: {}", exe.display()));
+    let device_profile = guess_device_profile(entry);
+    summary_lines.push(format!("Device profile: {}", device_profile.label()));
 
     // Same Stub→Unicorn promotion logic as `pocket_desktop::runner`:
     // a user who clicks "Run" wants the real ARM core regardless of
@@ -278,6 +281,7 @@ fn run_game_to_completion(
     emu.set_halt_on_unimplemented(entry.settings.halt_on_unimplemented);
     emu.max_slices = entry.settings.max_slices;
     emu.instruction_budget_per_slice = entry.settings.instructions_per_slice;
+    emu.set_device_profile(device_profile);
 
     if let Err(e) = emu.load_pe(&exe) {
         summary_lines.push(format!("load_pe failed: {e:#}"));
@@ -342,6 +346,39 @@ fn run_game_to_completion(
     }
 
     summary_lines.join("\n")
+}
+
+fn guess_device_profile(entry: &GameEntry) -> DeviceProfile {
+    let mut haystack = String::new();
+    haystack.push_str(&entry.display_name.to_ascii_lowercase());
+    haystack.push(' ');
+    haystack.push_str(&entry.executable.to_string_lossy().to_ascii_lowercase());
+    haystack.push(' ');
+    haystack.push_str(&entry.source_cab.to_ascii_lowercase());
+    if let Some(provider) = &entry.provider {
+        haystack.push(' ');
+        haystack.push_str(&provider.to_ascii_lowercase());
+    }
+
+    const SMARTPHONE_TAGS: [&str; 11] = [
+        "sgh-i617",
+        "i617",
+        "blackjack",
+        "smartphone",
+        "windows mobile 6 standard",
+        "wm6 standard",
+        "wm6standard",
+        "moto_q",
+        "motorola q",
+        "_q9",
+        "_q11",
+    ];
+
+    if SMARTPHONE_TAGS.iter().any(|tag| haystack.contains(tag)) {
+        DeviceProfile::SmartphoneWm6Standard
+    } else {
+        DeviceProfile::PocketPc2003
+    }
 }
 
 #[cfg(feature = "unicorn")]
