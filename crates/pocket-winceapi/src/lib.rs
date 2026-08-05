@@ -25,7 +25,7 @@ pub mod hss;
 pub mod ole32;
 pub mod ordinals;
 
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::io::Write;
 
 use pocket_cpu::{regs::ArmReg, Cpu};
@@ -96,6 +96,14 @@ pub struct WinCeDispatcher {
     pub halt_on_unimplemented: bool,
     /// Optional JSON-lines sink. One record per dispatched call.
     trace_sink: Option<Box<dyn Write + Send>>,
+    /// Total number of dispatched calls seen since startup.
+    total_calls: u64,
+    /// Count of calls that resolved to no handler.
+    unimplemented_calls: u64,
+    /// Count of handlers that returned an error.
+    handler_errors: u64,
+    /// Recent notable events, preserved as short strings for summaries.
+    recent_events: VecDeque<String>,
 }
 
 impl Default for WinCeDispatcher {
@@ -112,6 +120,10 @@ impl WinCeDispatcher {
             by_thunk_va: HashMap::new(),
             halt_on_unimplemented: false,
             trace_sink: None,
+            total_calls: 0,
+            unimplemented_calls: 0,
+            handler_errors: 0,
+            recent_events: VecDeque::with_capacity(24),
         };
         coredll::register(&mut d);
         ddraw::register(&mut d);
@@ -179,6 +191,30 @@ impl WinCeDispatcher {
     /// `{"dll": "...", "name": "...", "args": [r0, r1, r2, r3], "ret": <u32>, "status": "ok"|"unimplemented"|"halt"}`.
     pub fn set_trace_sink(&mut self, sink: Box<dyn Write + Send>) {
         self.trace_sink = Some(sink);
+    }
+
+    fn push_event(&mut self, event: String) {
+        const MAX_EVENTS: usize = 24;
+        if self.recent_events.len() == MAX_EVENTS {
+            self.recent_events.pop_front();
+        }
+        self.recent_events.push_back(event);
+    }
+
+    /// Human-readable summary of recent API behavior.
+    pub fn diagnostics_lines(&self) -> Vec<String> {
+        let mut lines = vec![
+            format!("API calls: {}", self.total_calls),
+            format!("Unimplemented APIs: {}", self.unimplemented_calls),
+            format!("Handler errors: {}", self.handler_errors),
+        ];
+        if !self.recent_events.is_empty() {
+            lines.push("Recent notable events:".to_string());
+            for event in &self.recent_events {
+                lines.push(format!("  {event}"));
+            }
+        }
+        lines
     }
 
     /// Resolve `thunk` to a handler, populating [`Self::by_thunk_va`]
@@ -258,6 +294,7 @@ impl Dispatcher for WinCeDispatcher {
         thunk: &Thunk,
         kernel: &mut KernelState,
     ) -> Result<DispatchOutcome, KernelError> {
+        self.total_calls = self.total_calls.saturating_add(1);
         let handler_opt = self.resolve_handler(thunk);
 
         // Capture args before the handler may mutate them. Skip the
@@ -288,11 +325,15 @@ impl Dispatcher for WinCeDispatcher {
                     // synthesise a 0 return so the trace still
                     // captures every call after this one.
                     log::warn!("handler {} failed: {}; returning 0", thunk.label(), e);
+                    self.handler_errors = self.handler_errors.saturating_add(1);
+                    self.push_event(format!("handler error {}: {e}", thunk.label()));
                     Ok(DispatchOutcome::ReturnedR0(0))
                 }
             }
         } else {
             log::warn!("unimplemented call -> {}", thunk.label());
+            self.unimplemented_calls = self.unimplemented_calls.saturating_add(1);
+            self.push_event(format!("unimplemented {}", thunk.label()));
             if self.halt_on_unimplemented {
                 Ok(DispatchOutcome::Halt)
             } else {
