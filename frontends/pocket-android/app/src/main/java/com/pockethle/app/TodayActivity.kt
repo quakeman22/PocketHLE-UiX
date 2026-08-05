@@ -42,9 +42,6 @@ class TodayActivity : AppCompatActivity() {
     private lateinit var clock: TextView
     private lateinit var statusLine: TextView
     private lateinit var ownerText: TextView
-    private lateinit var calendarText: TextView
-    private lateinit var messagesText: TextView
-    private lateinit var tasksText: TextView
     private lateinit var programsText: TextView
     private lateinit var startPanel: View
     private lateinit var startScrim: View
@@ -64,9 +61,6 @@ class TodayActivity : AppCompatActivity() {
         clock = findViewById(R.id.clock)
         statusLine = findViewById(R.id.status_line)
         ownerText = findViewById(R.id.owner_text)
-        calendarText = findViewById(R.id.calendar_text)
-        messagesText = findViewById(R.id.messages_text)
-        tasksText = findViewById(R.id.tasks_text)
         programsText = findViewById(R.id.programs_text)
         favoritesList = findViewById(R.id.favorites_list)
         favoritesEmpty = findViewById(R.id.favorites_empty)
@@ -92,9 +86,6 @@ class TodayActivity : AppCompatActivity() {
         startScrim.setOnClickListener { closeStartPanel() }
         findViewById<View>(R.id.btn_install_cab).setOnClickListener { openImportPicker() }
         findViewById<View>(R.id.owner_row).setOnClickListener { editOwnerInfo() }
-        findViewById<View>(R.id.calendar_row).setOnClickListener { launchLibrary() }
-        findViewById<View>(R.id.messages_row).setOnClickListener { launchLibrary() }
-        findViewById<View>(R.id.tasks_row).setOnClickListener { launchLibrary() }
         findViewById<View>(R.id.programs_row).setOnClickListener { launchLibrary() }
         findViewById<View>(R.id.settings_row).setOnClickListener { openSettings() }
         findViewById<View>(R.id.about_row).setOnClickListener { showAboutDialog() }
@@ -141,13 +132,10 @@ class TodayActivity : AppCompatActivity() {
         favoritesEmpty.visibility = if (favorites.isEmpty()) View.VISIBLE else View.GONE
 
         val dateStr = SimpleDateFormat("EEEE, MMMM d, yyyy", Locale.getDefault()).format(java.util.Date())
-        statusLine.text = "$dateStr\n${getString(R.string.today_owner_line, games.size)}"
+        statusLine.text = dateStr
         ownerText.text = prefs.getString(KEY_OWNER_TEXT, null)
             ?.takeIf { it.isNotBlank() }
             ?: getString(R.string.today_owner_hint)
-        calendarText.text = getString(R.string.today_calendar_line)
-        messagesText.text = getString(R.string.today_messages_line)
-        tasksText.text = getString(R.string.today_tasks_line)
         programsText.text = getString(R.string.today_programs_line, games.size)
     }
 
