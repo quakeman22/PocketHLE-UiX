@@ -2,24 +2,24 @@
 <!-- Windows Mobile / Pocket PC inspired palette. -->
 <resources>
     <!-- M3 color roles -->
-    <color name="md_primary">#2C5B98</color>
+    <color name="md_primary">#0E4A9C</color>
     <color name="md_on_primary">#FFFFFF</color>
-    <color name="md_primary_container">#DCE6F3</color>
+    <color name="md_primary_container">#D8E6F7</color>
     <color name="md_on_primary_container">#10233E</color>
 
-    <color name="md_secondary">#5E748D</color>
+    <color name="md_secondary">#6D7F92</color>
     <color name="md_on_secondary">#FFFFFF</color>
-    <color name="md_secondary_container">#DCE5EF</color>
+    <color name="md_secondary_container">#E4EBF2</color>
     <color name="md_on_secondary_container">#10233E</color>
 
-    <color name="md_tertiary">#10233E</color>
+    <color name="md_tertiary">#05316E</color>
     <color name="md_on_tertiary">#FFFFFF</color>
 
-    <color name="md_background">#A9BDD8</color>
+    <color name="md_background">#9EC3E7</color>
     <color name="md_on_background">#10233E</color>
-    <color name="md_surface">#DCE5EF</color>
+    <color name="md_surface">#E8EEF5</color>
     <color name="md_on_surface">#10233E</color>
-    <color name="md_surface_variant">#CAD5E0</color>
+    <color name="md_surface_variant">#D3DDE8</color>
     <color name="md_on_surface_variant">#2E435D</color>
     <color name="md_outline">#7D90A7</color>
 
@@ -31,13 +31,21 @@
     <color name="primary_dark">@color/md_tertiary</color>
     <color name="accent">@color/md_tertiary</color>
     <color name="background_light">@color/md_background</color>
-    <color name="background_dark">#10233E</color>
-    <color name="surface_dark">#10233E</color>
-    <color name="grid_icon_bg">#E7EDF4</color>
-    <color name="card_stroke">#7E92A8</color>
+    <color name="background_dark">#05316E</color>
+    <color name="surface_dark">#05316E</color>
+    <color name="grid_icon_bg">#F4F7FB</color>
+    <color name="card_stroke">#8A9CB0</color>
 
     <!-- Pocket PC background + titlebar -->
-    <color name="grid_bg_top">#AFC2DB</color>
-    <color name="grid_bg_bottom">#9FB4CF</color>
-    <color name="poster_scrim">#CC10233E</color>
+    <color name="grid_bg_top">#B6D4EE</color>
+    <color name="grid_bg_bottom">#8AB7E0</color>
+    <color name="poster_scrim">#CC05316E</color>
+
+    <color name="xp_title_start">#0E4E9F</color>
+    <color name="xp_title_end">#063A82</color>
+    <color name="xp_start_start">#7ACC3A</color>
+    <color name="xp_start_end">#4EA61E</color>
+    <color name="xp_panel_fill">#EEF4FA</color>
+    <color name="xp_row_fill">#F7FAFD</color>
+    <color name="xp_row_alt_fill">#ECF2F8</color>
 </resources>
