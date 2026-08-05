@@ -23,5 +23,5 @@
         android:layout_height="0dp"
         android:layout_margin="8dp"
         android:layout_weight="1"
-        android:background="@drawable/bg_wm_panel" />
+        android:background="@drawable/bg_xp_panel" />
 </LinearLayout>

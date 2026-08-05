@@ -23,7 +23,7 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         android:layout_margin="8dp"
-        android:background="@drawable/bg_wm_panel">
+        android:background="@drawable/bg_xp_panel">
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recycler"
@@ -52,15 +52,15 @@
         android:orientation="horizontal">
 
         <LinearLayout
-            android:id="@+id/btn_today"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:background="@drawable/bg_softkey"
-            android:clickable="true"
-            android:focusable="true"
-            android:gravity="center"
-            android:orientation="horizontal">
+                android:id="@+id/btn_today"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@drawable/bg_softkey"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:orientation="horizontal">
 
             <ImageView
                 android:layout_width="16dp"
@@ -85,14 +85,14 @@
 
         <LinearLayout
             android:id="@+id/btn_import"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:background="@drawable/bg_softkey"
-            android:clickable="true"
-            android:focusable="true"
-            android:gravity="center"
-            android:orientation="horizontal">
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@drawable/bg_softkey"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:orientation="horizontal">
 
             <ImageView
                 android:layout_width="16dp"
