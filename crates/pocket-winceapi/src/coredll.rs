@@ -11356,7 +11356,7 @@ mod tests {
             gx_last_pushed_counter: 0,
             gx_guest_signature: None,
             synthetic_message_count: 0,
-            synthetic_message_budget: 240,
+            synthetic_message_budget: 0,
             wnd_proc: 0,
             window_class_procs: std::collections::HashMap::new(),
             window_background: None,
