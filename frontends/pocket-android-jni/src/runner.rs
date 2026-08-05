@@ -338,6 +338,11 @@ fn run_game_to_completion(
         Ok(()) => summary_lines.push("Emulator exited cleanly.".to_string()),
         Err(e) => summary_lines.push(format!("Emulator stopped: {e:#}")),
     }
+    let diagnostics = emu.dispatcher().diagnostics_lines();
+    if !diagnostics.is_empty() {
+        summary_lines.push("Diagnostics:".to_string());
+        summary_lines.extend(diagnostics.into_iter().map(|line| format!("  {line}")));
+    }
 
     // Push one last framebuffer so the UI ends up showing whatever
     // the guest left on screen even if it stopped between frames.

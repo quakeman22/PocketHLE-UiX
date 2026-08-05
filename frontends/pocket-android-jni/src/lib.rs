@@ -368,6 +368,11 @@ fn run_game(root: &Path, id: &str) -> RunOutcomeJson {
             Err(e) => format!("Emulator stopped: {e:#}"),
         };
         summary_lines.push(run_status);
+        let diagnostics = emu.dispatcher().diagnostics_lines();
+        if !diagnostics.is_empty() {
+            summary_lines.push("Diagnostics:".to_string());
+            summary_lines.extend(diagnostics.into_iter().map(|line| format!("  {line}")));
+        }
         let frame = emu.process().map(|p| {
             let fb = &p.state.framebuffer;
             FrameJson {
