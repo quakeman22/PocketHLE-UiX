@@ -17,7 +17,7 @@ use std::path::Path;
 use anyhow::{Context, Result};
 
 use pocket_cpu::{stub::StubCpu, Cpu};
-use pocket_kernel::{run_main_loop, run_main_loop_with_hook, FrameHook, Process};
+use pocket_kernel::{run_main_loop, run_main_loop_with_hook, DeviceProfile, FrameHook, Process};
 use pocket_winceapi::{resolve_ordinal, WinCeDispatcher};
 
 pub use pocket_cab as cab;
@@ -34,6 +34,7 @@ pub struct Emulator {
     /// [`Emulator::set_screen_size`] works whether it is called before
     /// or after [`Emulator::load_pe`]. See that method for why.
     requested_screen: Option<(u32, u32)>,
+    requested_device_profile: Option<DeviceProfile>,
     pub instruction_budget_per_slice: u64,
     pub max_slices: u64,
 }
@@ -45,6 +46,7 @@ impl Emulator {
             process: None,
             dispatcher: WinCeDispatcher::new(),
             requested_screen: None,
+            requested_device_profile: None,
             instruction_budget_per_slice: 1_000_000,
             max_slices: 1024,
         }
@@ -66,6 +68,7 @@ impl Emulator {
             process: None,
             dispatcher: WinCeDispatcher::new(),
             requested_screen: None,
+            requested_device_profile: None,
             instruction_budget_per_slice: 1_000_000,
             max_slices: 1024,
         })
@@ -98,6 +101,11 @@ impl Emulator {
         // request honoured here rather than silently dropped.
         if let Some((w, h)) = self.requested_screen {
             self.apply_screen_size(w, h);
+        }
+        if let Some(profile) = self.requested_device_profile {
+            if let Some(p) = self.process.as_mut() {
+                p.state.device_profile = profile;
+            }
         }
         Ok(self.process.as_ref().unwrap())
     }
@@ -193,6 +201,14 @@ impl Emulator {
             p.state.vfs.mount_save_dir(guest_prefix, host_dir);
         } else {
             log::warn!("mount_save_dir called before load_pe; ignored");
+        }
+    }
+
+    /// Set the handset identity exposed by WinCE version / registry APIs.
+    pub fn set_device_profile(&mut self, profile: DeviceProfile) {
+        self.requested_device_profile = Some(profile);
+        if let Some(p) = self.process.as_mut() {
+            p.state.device_profile = profile;
         }
     }
 
