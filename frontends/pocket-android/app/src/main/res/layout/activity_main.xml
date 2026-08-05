@@ -21,7 +21,7 @@
             android:layout_height="?attr/actionBarSize"
             android:background="@android:color/transparent"
             app:popupTheme="@style/ThemeOverlay.PocketHLE.AppBar"
-            app:title="@string/app_name"
+            app:title="@string/nav_games_library"
             app:titleTextColor="?attr/colorOnBackground" />
     </com.google.android.material.appbar.AppBarLayout>
 
