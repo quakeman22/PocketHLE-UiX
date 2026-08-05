@@ -42,7 +42,11 @@ class TodayActivity : AppCompatActivity() {
         favoritesList.adapter = adapter
 
         findViewById<View>(R.id.softkey_games).setOnClickListener {
-            startActivity(Intent(this, MainActivity::class.java))
+            startActivity(
+                Intent(this, MainActivity::class.java).addFlags(
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP,
+                ),
+            )
         }
         findViewById<View>(R.id.softkey_start).setOnClickListener { showStartMenu(it) }
         findViewById<View>(R.id.btn_add_favorite).setOnClickListener { showAddFavoritesDialog() }

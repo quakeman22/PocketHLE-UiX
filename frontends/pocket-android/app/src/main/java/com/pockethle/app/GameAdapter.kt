@@ -9,11 +9,12 @@ import android.widget.ImageButton
 import android.widget.PopupMenu
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import java.util.Locale
 
 /**
- * RecyclerView adapter for the library screen — launcher-style poster
- * grid. Tapping a poster runs the game; Settings/Remove/"Choose cover"
- * live behind the tile's overflow (⋮) button.
+ * RecyclerView adapter for the library screen — a Pocket PC-style list
+ * row. Tapping a row runs the game; Settings/Remove/"Choose cover" live
+ * behind the row's overflow (⋮) button.
  *
  * Cover art precedence: user-picked custom cover (via [CoverStore]) >
  * icon extracted from the game's .CAB > generic placeholder.
@@ -42,7 +43,7 @@ class GameAdapter(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_game_grid, parent, false)
+            .inflate(R.layout.item_game, parent, false)
         return ViewHolder(view)
     }
 
@@ -53,13 +54,20 @@ class GameAdapter(
     override fun getItemCount(): Int = items.size
 
     inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        private val posterCard: View = view.findViewById(R.id.poster_card)
         private val icon = view.findViewById<android.widget.ImageView>(R.id.game_icon)
         private val title: TextView = view.findViewById(R.id.game_title)
+        private val subtitle: TextView = view.findViewById(R.id.game_subtitle)
+        private val backend: TextView = view.findViewById(R.id.game_backend)
         private val moreBtn: ImageButton = view.findViewById(R.id.btn_more)
 
         fun bind(entry: GameEntry) {
             title.text = entry.displayName
+            subtitle.text = entry.executable
+            backend.text = buildString {
+                append(entry.settings.cpuBackend.uppercase(Locale.ROOT))
+                append(" • ")
+                append(entry.settings.screen)
+            }
 
             val bitmap = GameArt.load(itemView.context, entry, libraryRoot)
 
@@ -75,7 +83,7 @@ class GameAdapter(
                 )
             }
 
-            posterCard.setOnClickListener { onRun(entry) }
+            itemView.setOnClickListener { onRun(entry) }
             moreBtn.setOnClickListener { showOverflowMenu(it, entry) }
         }
 

@@ -13,9 +13,8 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -55,7 +54,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setSupportActionBar(findViewById<Toolbar>(R.id.toolbar))
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.setDisplayHomeAsUpEnabled(false)
 
         rootDir = LibraryPaths.root(this)
         emptyState = findViewById(R.id.empty_state)
@@ -80,10 +79,17 @@ class MainActivity : AppCompatActivity() {
             },
             libraryRoot = rootDir,
         )
-        recycler.layoutManager = GridLayoutManager(this, gridSpanCount())
+        recycler.layoutManager = LinearLayoutManager(this)
         recycler.adapter = adapter
 
-        findViewById<ExtendedFloatingActionButton>(R.id.fab_import).setOnClickListener {
+        findViewById<View>(R.id.btn_today).setOnClickListener {
+            startActivity(
+                Intent(this, TodayActivity::class.java).addFlags(
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP,
+                ),
+            )
+        }
+        findViewById<View>(R.id.btn_import).setOnClickListener {
             importGame.launch(arrayOf("application/vnd.ms-cab-compressed", "application/x-rar-compressed", "application/zip", "application/octet-stream", "*/*"))
         }
     }
@@ -114,12 +120,6 @@ class MainActivity : AppCompatActivity() {
             }
             else -> super.onOptionsItemSelected(item)
         }
-    }
-
-    /** Roughly 110dp-wide tiles, like a game launcher grid; at least 2 columns. */
-    private fun gridSpanCount(): Int {
-        val widthDp = resources.configuration.screenWidthDp
-        return (widthDp / 110).coerceAtLeast(2)
     }
 
     private fun refreshLibrary() {
