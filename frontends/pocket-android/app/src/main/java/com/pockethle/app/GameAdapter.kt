@@ -61,10 +61,7 @@ class GameAdapter(
         fun bind(entry: GameEntry) {
             title.text = entry.displayName
 
-            val customCover = CoverStore.coverFile(itemView.context, entry.id)
-            val iconFile = entry.icon?.let { File(libraryRoot, "games/${entry.id}/$it") }
-            val artFile = customCover.takeIf { it.isFile } ?: iconFile?.takeIf { it.isFile }
-            val bitmap = artFile?.let { BitmapFactory.decodeFile(it.absolutePath) }
+            val bitmap = GameArt.load(itemView.context, entry, libraryRoot)
 
             if (bitmap != null) {
                 icon.scaleType = android.widget.ImageView.ScaleType.CENTER_CROP
