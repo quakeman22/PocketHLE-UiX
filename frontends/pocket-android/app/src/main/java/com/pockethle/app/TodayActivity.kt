@@ -1,17 +1,24 @@
 package com.pockethle.app
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.provider.OpenableColumns
 import android.view.View
 import android.widget.TextView
 import androidx.activity.addCallback
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.core.view.doOnLayout
+import androidx.lifecycle.lifecycleScope
 import java.text.SimpleDateFormat
 import java.util.Locale
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * App launcher entry point — a Today screen with quick status rows,
@@ -30,6 +37,12 @@ class TodayActivity : AppCompatActivity() {
     private lateinit var startPanel: View
     private lateinit var startScrim: View
     private var startPanelOpen = false
+
+    private val importGame = registerForActivityResult(
+        ActivityResultContracts.OpenDocument(),
+    ) { uri ->
+        if (uri != null) handleImport(uri)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,6 +73,9 @@ class TodayActivity : AppCompatActivity() {
             toggleStartPanel()
         }
         startScrim.setOnClickListener { closeStartPanel() }
+        findViewById<View>(R.id.btn_install_cab).setOnClickListener {
+            importGame.launch(arrayOf("application/vnd.ms-cab-compressed", "application/x-rar-compressed", "application/zip", "application/octet-stream", "*/*"))
+        }
         findViewById<View>(R.id.btn_add_favorite).setOnClickListener { showAddFavoritesDialog() }
 
         onBackPressedDispatcher.addCallback(this) {
@@ -133,6 +149,69 @@ class TodayActivity : AppCompatActivity() {
             }
             .setNegativeButton(android.R.string.cancel, null)
             .show()
+    }
+
+    private fun handleImport(uri: Uri) {
+        val name = queryDisplayName(uri) ?: "import.cab"
+        lifecycleScope.launch {
+            val result = withContext(Dispatchers.IO) {
+                runCatching {
+                    val cabFile = LibraryPaths.copyUriToCache(this@TodayActivity, uri, name)
+                    importArchiveOrExe(cabFile)
+                }
+            }
+            result.fold(
+                onSuccess = {
+                    if (handleImportResult(it)) {
+                        refresh()
+                    }
+                },
+                onFailure = { err ->
+                    AlertDialog.Builder(this@TodayActivity)
+                        .setTitle(R.string.import_failed)
+                        .setMessage(err.message ?: "unknown")
+                        .setPositiveButton(android.R.string.ok, null)
+                        .show()
+                },
+            )
+        }
+    }
+
+    private fun importArchiveOrExe(file: java.io.File): String {
+        return when (file.extension.lowercase()) {
+            "exe" -> NativeBridge.importExe(rootDir, file.absolutePath)
+            "rar" -> error("RAR is not supported on-device yet; extract it first and import the CAB or EXE")
+            else -> NativeBridge.importCab(rootDir, file.absolutePath)
+        }
+    }
+
+    private fun handleImportResult(raw: String): Boolean {
+        try {
+            val obj = org.json.JSONObject(raw)
+            if (!obj.optBoolean("ok", true)) {
+                AlertDialog.Builder(this)
+                    .setTitle(R.string.import_failed_title)
+                    .setMessage(obj.optString("error"))
+                    .setPositiveButton(android.R.string.ok, null)
+                    .show()
+                return false
+            }
+            return true
+        } catch (e: Exception) {
+            AlertDialog.Builder(this)
+                .setTitle(R.string.import_failed_title)
+                .setMessage(raw)
+                .setPositiveButton(android.R.string.ok, null)
+                .show()
+            return false
+        }
+    }
+
+    private fun queryDisplayName(uri: Uri): String? {
+        return contentResolver.query(uri, null, null, null, null)?.use { c ->
+            val ix = c.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+            if (ix >= 0 && c.moveToFirst()) c.getString(ix) else null
+        }
     }
 
     private fun toggleStartPanel() {
