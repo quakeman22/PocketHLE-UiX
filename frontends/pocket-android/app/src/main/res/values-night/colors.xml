@@ -1,26 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- "Sand" Material 3 palette (dark) — deep warm browns instead of black. -->
+<!-- Dark Pocket PC-inspired palette. -->
 <resources>
-    <color name="md_primary">#E0BB86</color>
-    <color name="md_on_primary">#402D0F</color>
-    <color name="md_primary_container">#5C4020</color>
-    <color name="md_on_primary_container">#FCDFB6</color>
+    <color name="md_primary">#89A9D8</color>
+    <color name="md_on_primary">#0F2140</color>
+    <color name="md_primary_container">#1D355E</color>
+    <color name="md_on_primary_container">#D8E3F5</color>
 
-    <color name="md_secondary">#D4C4A6</color>
-    <color name="md_on_secondary">#362B18</color>
-    <color name="md_secondary_container">#4E4330</color>
-    <color name="md_on_secondary_container">#F0E0C2</color>
+    <color name="md_secondary">#A2B7D7</color>
+    <color name="md_on_secondary">#11233F</color>
+    <color name="md_secondary_container">#233A5A</color>
+    <color name="md_on_secondary_container">#E6EEF9</color>
 
-    <color name="md_tertiary">#C99B6E</color>
-    <color name="md_on_tertiary">#3A2410</color>
+    <color name="md_tertiary">#6C89B8</color>
+    <color name="md_on_tertiary">#FFFFFF</color>
 
-    <color name="md_background">#1C160D</color>
-    <color name="md_on_background">#ECE0CD</color>
-    <color name="md_surface">#1C160D</color>
-    <color name="md_on_surface">#ECE0CD</color>
-    <color name="md_surface_variant">#4E4432</color>
-    <color name="md_on_surface_variant">#D0C1A3</color>
-    <color name="md_outline">#9C8D6F</color>
+    <color name="md_background">#16263D</color>
+    <color name="md_on_background">#E5EDF8</color>
+    <color name="md_surface">#16263D</color>
+    <color name="md_on_surface">#E5EDF8</color>
+    <color name="md_surface_variant">#284261</color>
+    <color name="md_on_surface_variant">#C0D0E7</color>
+    <color name="md_outline">#6C86A6</color>
 
     <color name="md_error">#F2B8B5</color>
     <color name="md_on_error">#601410</color>
@@ -29,9 +29,9 @@
     <color name="primary_dark">@color/md_tertiary</color>
     <color name="accent">@color/md_tertiary</color>
     <color name="grid_icon_bg">@color/md_surface_variant</color>
-    <color name="card_stroke">#33FFFFFF</color>
+    <color name="card_stroke">#4E6D91</color>
 
-    <color name="grid_bg_top">#1C160D</color>
-    <color name="grid_bg_bottom">#332616</color>
-    <color name="poster_scrim">#E0100C06</color>
+    <color name="grid_bg_top">#16263D</color>
+    <color name="grid_bg_bottom">#243A5E</color>
+    <color name="poster_scrim">#CC0E1C31</color>
 </resources>
