@@ -19,6 +19,8 @@
 
 use std::collections::HashMap;
 
+use crate::DeviceProfile;
+
 /// Value types we model — the subset Pocket PC titles actually use.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum RegistryValue {
@@ -118,12 +120,37 @@ impl Registry {
     /// Information" control panel), and games read the owner name to
     /// personalise menus. MetalStrike additionally reads its own
     /// licence pair, which earlier work established as `1739` / `0`.
-    pub fn with_device_defaults() -> Self {
+    pub fn with_device_defaults(profile: DeviceProfile) -> Self {
         let mut reg = Self::new();
         reg.set_value(
             r"HKCU\ControlPanel\Owner",
             "Owner",
             RegistryValue::Sz("Argon".to_string()),
+        );
+        reg.set_value(
+            r"HKLM\System\Platform",
+            "DeviceName",
+            RegistryValue::Sz(profile.model().to_string()),
+        );
+        reg.set_value(
+            r"HKLM\System\Platform",
+            "Model",
+            RegistryValue::Sz(profile.model().to_string()),
+        );
+        reg.set_value(
+            r"HKLM\System\Platform",
+            "Manufacturer",
+            RegistryValue::Sz(profile.manufacturer().to_string()),
+        );
+        reg.set_value(
+            r"HKLM\System\Platform",
+            "FriendlyName",
+            RegistryValue::Sz(profile.friendly_name().to_string()),
+        );
+        reg.set_value(
+            r"HKLM\Ident",
+            "Name",
+            RegistryValue::Sz(profile.friendly_name().to_string()),
         );
         reg.set_value(
             r"HKLM\SOFTWARE\Greatelsoft.Com\MetalStrike",

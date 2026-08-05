@@ -133,6 +133,55 @@ pub const DEFAULT_MODULE_PATH: &str = "\\Program Files\\Game\\Game.exe";
 /// launches an application from the Programs list.
 pub const SW_SHOWNORMAL: u32 = 1;
 
+/// Device identity exposed to the guest through WinCE version and
+/// registry APIs.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum DeviceProfile {
+    /// Pocket PC 2003 / Windows CE 4.20.
+    #[default]
+    PocketPc2003,
+    /// Windows Mobile 6 Standard smartphone, suitable for devices
+    /// such as the Samsung SGH-i617 / BlackJack II.
+    SmartphoneWm6Standard,
+}
+
+impl DeviceProfile {
+    pub fn label(self) -> &'static str {
+        match self {
+            DeviceProfile::PocketPc2003 => "Pocket PC 2003",
+            DeviceProfile::SmartphoneWm6Standard => "Windows Mobile 6 Standard",
+        }
+    }
+
+    pub fn version_triplet(self) -> (u32, u32, u32, &'static str) {
+        match self {
+            DeviceProfile::PocketPc2003 => (4, 20, 1081, "Pocket PC 2003"),
+            DeviceProfile::SmartphoneWm6Standard => (5, 2, 0, "Windows Mobile 6 Standard"),
+        }
+    }
+
+    pub fn manufacturer(self) -> &'static str {
+        match self {
+            DeviceProfile::PocketPc2003 => "Generic",
+            DeviceProfile::SmartphoneWm6Standard => "Samsung",
+        }
+    }
+
+    pub fn model(self) -> &'static str {
+        match self {
+            DeviceProfile::PocketPc2003 => "Pocket PC",
+            DeviceProfile::SmartphoneWm6Standard => "SGH-i617",
+        }
+    }
+
+    pub fn friendly_name(self) -> &'static str {
+        match self {
+            DeviceProfile::PocketPc2003 => "Pocket PC 2003",
+            DeviceProfile::SmartphoneWm6Standard => "Samsung BlackJack II",
+        }
+    }
+}
+
 /// Base of the guest-side heap region. 16 MiB is plenty for the
 /// little games we target and still leaves headroom for the stack.
 pub const HEAP_BASE: u32 = 0x5000_0000;
@@ -580,6 +629,8 @@ pub struct KernelState {
     /// nonsense like `\\Programdata.pak`. Frontends set this to the
     /// install path the CAB would have used on a device.
     pub module_path: String,
+    /// Synthetic handset identity exposed through version / registry APIs.
+    pub device_profile: DeviceProfile,
     /// Software-rendered display the GDI/GAPI handlers paint into.
     pub framebuffer: Framebuffer,
     /// Tracked GDI objects (DCs, bitmaps, brushes, pens, fonts).
@@ -1618,6 +1669,7 @@ impl Process {
                 heap,
                 vfs: vfs::Vfs::new(),
                 module_path: DEFAULT_MODULE_PATH.to_string(),
+                device_profile: DeviceProfile::default(),
                 framebuffer: Framebuffer::default(),
                 gdi: GdiState::new(),
                 resources,
@@ -1645,7 +1697,7 @@ impl Process {
                 find_handles: HashMap::new(),
                 next_find_handle: 0,
                 pending_startup: std::collections::VecDeque::new(),
-                registry: crate::registry::Registry::with_device_defaults(),
+                registry: crate::registry::Registry::with_device_defaults(DeviceProfile::default()),
                 window_procs: HashMap::new(),
                 window_userdata: HashMap::new(),
                 window_classes: HashMap::new(),
