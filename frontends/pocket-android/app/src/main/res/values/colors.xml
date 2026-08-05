@@ -48,4 +48,6 @@
     <color name="xp_panel_fill">#EEF4FA</color>
     <color name="xp_row_fill">#F7FAFD</color>
     <color name="xp_row_alt_fill">#ECF2F8</color>
+    <color name="xp_row_text">#10233E</color>
+    <color name="xp_row_subtext">#4F647B</color>
 </resources>
