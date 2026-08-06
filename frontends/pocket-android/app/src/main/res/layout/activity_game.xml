@@ -13,16 +13,14 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_launcher_gradient"
     android:orientation="vertical">
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="40dp"
-        android:background="@drawable/bg_today_titlebar"
-        android:theme="@style/ThemeOverlay.PocketHLE.AppBar"
-        app:popupTheme="@style/ThemeOverlay.PocketHLE.AppBar" />
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorPrimary"
+        app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
 
     <FrameLayout
         android:layout_width="match_parent"
@@ -66,119 +64,98 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/bg_xp_panel"
+        android:background="#1A000000"
         android:orientation="horizontal"
-        android:padding="10dp">
+        android:padding="8dp">
 
         <!--
-            D-pad cluster. The buttons are laid out in three rows so
-            the directional controls read more like a physical pad:
-            up on top, left/right in the middle, down at the bottom.
-            The container keeps enough height to preserve that shape.
+            D-pad cluster. The FrameLayout must be tall enough to fit
+            three rows of 48dp buttons (up at the top, left/right in
+            the middle, down at the bottom). `wrap_content` sizes to
+            the largest child (48dp) and collapses up/down on top of
+            left/right, hiding the up arrow — so we pin a 144dp
+            minimum height.
         -->
         <FrameLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1.15"
-            android:minHeight="176dp"
-            android:padding="8dp">
+            android:layout_weight="1"
+            android:minHeight="156dp"
+            android:padding="4dp">
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:gravity="center"
-                android:orientation="vertical">
+            <Button
+                android:id="@+id/btn_up"
+                style="@null"
+                android:layout_width="52dp"
+                android:layout_height="52dp"
+                android:layout_gravity="center_horizontal|top"
+                android:background="@drawable/bg_gamepad_button"
+                android:contentDescription="@string/dpad_up"
+                android:includeFontPadding="false"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:stateListAnimator="@null"
+                android:text="@string/dpad_up_glyph"
+                android:textColor="#FFFFFFFF"
+                android:textSize="16sp" />
 
-                <Button
-                    android:id="@+id/btn_up"
-                    style="@null"
-                    android:layout_width="64dp"
-                    android:layout_height="64dp"
-                    android:layout_gravity="center_horizontal"
-                    android:layout_marginBottom="8dp"
-                    android:background="@drawable/bg_gamepad_button"
-                    android:backgroundTint="@null"
-                    android:contentDescription="@string/dpad_up"
-                    android:includeFontPadding="false"
-                    android:minWidth="0dp"
-                    android:minHeight="0dp"
-                    android:stateListAnimator="@null"
-                    android:text="@string/dpad_up_glyph"
-                    android:textColor="#FFFFFFFF"
-                    android:textSize="19sp" />
+            <Button
+                android:id="@+id/btn_down"
+                style="@null"
+                android:layout_width="52dp"
+                android:layout_height="52dp"
+                android:layout_gravity="center_horizontal|bottom"
+                android:background="@drawable/bg_gamepad_button"
+                android:contentDescription="@string/dpad_down"
+                android:includeFontPadding="false"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:stateListAnimator="@null"
+                android:text="@string/dpad_down_glyph"
+                android:textColor="#FFFFFFFF"
+                android:textSize="16sp" />
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
+            <Button
+                android:id="@+id/btn_left"
+                style="@null"
+                android:layout_width="52dp"
+                android:layout_height="52dp"
+                android:layout_gravity="start|center_vertical"
+                android:background="@drawable/bg_gamepad_button"
+                android:contentDescription="@string/dpad_left"
+                android:includeFontPadding="false"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:stateListAnimator="@null"
+                android:text="@string/dpad_left_glyph"
+                android:textColor="#FFFFFFFF"
+                android:textSize="16sp" />
 
-                    <Button
-                        android:id="@+id/btn_left"
-                        style="@null"
-                        android:layout_width="64dp"
-                        android:layout_height="64dp"
-                        android:layout_marginEnd="18dp"
-                        android:background="@drawable/bg_gamepad_button"
-                        android:backgroundTint="@null"
-                        android:contentDescription="@string/dpad_left"
-                        android:includeFontPadding="false"
-                        android:minWidth="0dp"
-                        android:minHeight="0dp"
-                        android:stateListAnimator="@null"
-                        android:text="@string/dpad_left_glyph"
-                        android:textColor="#FFFFFFFF"
-                        android:textSize="19sp" />
-
-                    <View
-                        android:layout_width="24dp"
-                        android:layout_height="1dp" />
-
-                    <Button
-                        android:id="@+id/btn_right"
-                        style="@null"
-                        android:layout_width="64dp"
-                        android:layout_height="64dp"
-                        android:layout_marginStart="18dp"
-                        android:background="@drawable/bg_gamepad_button"
-                        android:backgroundTint="@null"
-                        android:contentDescription="@string/dpad_right"
-                        android:includeFontPadding="false"
-                        android:minWidth="0dp"
-                        android:minHeight="0dp"
-                        android:stateListAnimator="@null"
-                        android:text="@string/dpad_right_glyph"
-                        android:textColor="#FFFFFFFF"
-                        android:textSize="19sp" />
-                </LinearLayout>
-
-                <Button
-                    android:id="@+id/btn_down"
-                    style="@null"
-                    android:layout_width="64dp"
-                    android:layout_height="64dp"
-                    android:layout_marginTop="8dp"
-                    android:background="@drawable/bg_gamepad_button"
-                    android:backgroundTint="@null"
-                    android:contentDescription="@string/dpad_down"
-                    android:includeFontPadding="false"
-                    android:minWidth="0dp"
-                    android:minHeight="0dp"
-                    android:stateListAnimator="@null"
-                    android:text="@string/dpad_down_glyph"
-                    android:textColor="#FFFFFFFF"
-                    android:textSize="19sp" />
-            </LinearLayout>
+            <Button
+                android:id="@+id/btn_right"
+                style="@null"
+                android:layout_width="52dp"
+                android:layout_height="52dp"
+                android:layout_gravity="end|center_vertical"
+                android:background="@drawable/bg_gamepad_button"
+                android:contentDescription="@string/dpad_right"
+                android:includeFontPadding="false"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:stateListAnimator="@null"
+                android:text="@string/dpad_right_glyph"
+                android:textColor="#FFFFFFFF"
+                android:textSize="16sp" />
         </FrameLayout>
 
         <!-- Action / soft-key cluster. -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="0.95"
+            android:layout_weight="1"
             android:gravity="center"
             android:orientation="vertical"
-            android:padding="6dp">
+            android:padding="4dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -189,124 +166,117 @@
                 <Button
                     android:id="@+id/btn_soft1"
                     style="@null"
-                    android:layout_width="50dp"
-                    android:layout_height="50dp"
-                    android:layout_marginEnd="10dp"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:layout_marginEnd="8dp"
                     android:background="@drawable/bg_gamepad_button"
                     android:includeFontPadding="false"
                     android:minWidth="0dp"
                     android:minHeight="0dp"
-                    android:backgroundTint="@null"
                     android:stateListAnimator="@null"
                     android:text="@string/soft1_label"
-                    android:textColor="#10233E"
-                    android:textSize="15sp" />
+                    android:textColor="#FFFFFFFF"
+                    android:textSize="13sp" />
 
                 <Button
                     android:id="@+id/btn_soft2"
                     style="@null"
-                    android:layout_width="50dp"
-                    android:layout_height="50dp"
-                    android:layout_marginStart="10dp"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:layout_marginStart="8dp"
                     android:background="@drawable/bg_gamepad_button"
                     android:includeFontPadding="false"
                     android:minWidth="0dp"
                     android:minHeight="0dp"
-                    android:backgroundTint="@null"
                     android:stateListAnimator="@null"
                     android:text="@string/soft2_label"
-                    android:textColor="#10233E"
-                    android:textSize="15sp" />
+                    android:textColor="#FFFFFFFF"
+                    android:textSize="13sp" />
             </LinearLayout>
 
             <Button
                 android:id="@+id/btn_action"
                 style="@null"
-                android:layout_width="72dp"
-                android:layout_height="72dp"
-                android:layout_marginTop="8dp"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:layout_marginTop="4dp"
                 android:background="@drawable/bg_gamepad_button_action"
                 android:contentDescription="@string/action_button"
                 android:includeFontPadding="false"
                 android:minWidth="0dp"
                 android:minHeight="0dp"
-                android:backgroundTint="@null"
                 android:stateListAnimator="@null"
                 android:text="@string/action_button_glyph"
                 android:textColor="#FFFFFFFF"
-                android:textSize="22sp" />
+                android:textSize="20sp" />
             <Button
                 android:id="@+id/btn_turbo"
                 style="@null"
-                android:layout_width="104dp"
-                android:layout_height="40dp"
-                android:layout_marginTop="10dp"
+                android:layout_width="88dp"
+                android:layout_height="36dp"
+                android:layout_marginTop="8dp"
                 android:background="@drawable/bg_gamepad_button_pill"
                 android:contentDescription="@string/turbo_button"
                 android:includeFontPadding="false"
                 android:letterSpacing="0.05"
                 android:minWidth="0dp"
                 android:minHeight="0dp"
-                android:backgroundTint="@null"
                 android:stateListAnimator="@null"
                 android:text="@string/turbo_button_label"
                 android:textColor="#FFFFFFFF"
-                android:textSize="13sp" />
+                android:textSize="12sp" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="4dp"
                 android:gravity="center"
                 android:orientation="horizontal">
 
                 <Button
                     android:id="@+id/btn_a"
                     style="@null"
-                    android:layout_width="50dp"
-                    android:layout_height="50dp"
-                    android:layout_marginEnd="6dp"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:layout_marginEnd="4dp"
                     android:background="@drawable/bg_gamepad_button"
                     android:includeFontPadding="false"
                     android:minWidth="0dp"
                     android:minHeight="0dp"
-                    android:backgroundTint="@null"
                     android:stateListAnimator="@null"
                     android:text="@string/key_a_label"
-                    android:textColor="#10233E"
-                    android:textSize="16sp" />
+                    android:textColor="#FFFFFFFF"
+                    android:textSize="14sp" />
 
                 <Button
                     android:id="@+id/btn_b"
                     style="@null"
-                    android:layout_width="50dp"
-                    android:layout_height="50dp"
-                    android:layout_marginHorizontal="6dp"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:layout_marginHorizontal="4dp"
                     android:background="@drawable/bg_gamepad_button"
                     android:includeFontPadding="false"
                     android:minWidth="0dp"
                     android:minHeight="0dp"
-                    android:backgroundTint="@null"
                     android:stateListAnimator="@null"
                     android:text="@string/key_b_label"
-                    android:textColor="#10233E"
-                    android:textSize="16sp" />
+                    android:textColor="#FFFFFFFF"
+                    android:textSize="14sp" />
 
                 <Button
                     android:id="@+id/btn_c"
                     style="@null"
-                    android:layout_width="50dp"
-                    android:layout_height="50dp"
-                    android:layout_marginStart="6dp"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:layout_marginStart="4dp"
                     android:background="@drawable/bg_gamepad_button"
                     android:includeFontPadding="false"
                     android:minWidth="0dp"
                     android:minHeight="0dp"
-                    android:backgroundTint="@null"
                     android:stateListAnimator="@null"
                     android:text="@string/key_c_label"
-                    android:textColor="#10233E"
-                    android:textSize="16sp" />
+                    android:textColor="#FFFFFFFF"
+                    android:textSize="14sp" />
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>
@@ -315,7 +285,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="?attr/colorSurface"
-        android:gravity="center_vertical"
         android:orientation="horizontal"
         android:padding="8dp">
 
@@ -325,27 +294,24 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:fontFamily="monospace"
-            android:maxLines="2"
-            android:ellipsize="end"
-            android:paddingEnd="8dp"
+            android:maxLines="6"
+            android:scrollbars="vertical"
             android:textColor="?android:attr/textColorPrimary"
             android:textSize="12sp" />
 
         <Button
             android:id="@+id/btn_log"
             style="@null"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/bg_wm_button"
-            android:backgroundTint="@null"
+            android:layout_width="96dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/bg_gamepad_button_action"
+            android:fontFamily="sans-serif-medium"
             android:minWidth="0dp"
             android:minHeight="0dp"
-            android:paddingHorizontal="16dp"
-            android:paddingVertical="10dp"
-            android:stateListAnimator="@null"
-            android:text="@string/game_log_button"
-            android:textAllCaps="false"
-            android:textColor="#10233E"
+            android:paddingHorizontal="12dp"
+            android:text="@string/log_button_label"
+            android:textColor="#FF0B1F3C"
             android:textSize="14sp" />
     </LinearLayout>
 </LinearLayout>
