@@ -1,5 +1,9 @@
 package com.pockethle.app
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.graphics.Typeface
 import android.annotation.SuppressLint
 import android.opengl.GLES20
 import android.opengl.GLSurfaceView
@@ -13,7 +17,10 @@ import android.os.SystemClock
 import android.view.MotionEvent
 import android.view.View
 import android.widget.ProgressBar
+import android.widget.Button
 import android.widget.TextView
+import android.widget.ScrollView
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import java.nio.ByteBuffer
@@ -124,6 +131,7 @@ class GameActivity : AppCompatActivity() {
         progress = findViewById(R.id.progress)
         fpsOverlay = findViewById(R.id.fps_overlay)
         status = findViewById(R.id.status)
+        findViewById<Button>(R.id.btn_log).setOnClickListener { showExecutionLogDialog() }
 
         showFps = readShowFpsPreference()
 
@@ -211,6 +219,28 @@ class GameActivity : AppCompatActivity() {
                 status.text = summary
             }
         }.start()
+    }
+
+    private fun showExecutionLogDialog() {
+        val logText = status.text?.toString().orEmpty().ifBlank { "No execution log available yet." }
+        val content = TextView(this).apply {
+            text = logText
+            setTextIsSelectable(true)
+            typeface = Typeface.MONOSPACE
+            setPadding(24, 24, 24, 24)
+        }
+        val scroll = ScrollView(this).apply {
+            addView(content)
+        }
+        AlertDialog.Builder(this)
+            .setTitle(R.string.log_dialog_title)
+            .setView(scroll)
+            .setPositiveButton(R.string.log_dialog_copy) { _, _ ->
+                val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                clipboard.setPrimaryClip(ClipData.newPlainText("PocketHLE log", logText))
+            }
+            .setNegativeButton(R.string.log_dialog_close, null)
+            .show()
     }
 
     private fun startAudio(handle: Long) {
