@@ -640,6 +640,7 @@ pub fn register(d: &mut WinCeDispatcher) {
     // ---- Misc kernel/IPC stubs ----
     d.register_constant(dll, "KernelIoControl", 0, zero_returning);
     d.register_constant(dll, "SystemParametersInfoW", 1, one_returning);
+    d.register_handler(dll, "GetSystemPowerState", get_system_power_state);
     d.register_constant(dll, "GetSystemPowerStatusEx", 1, one_returning);
     d.register_constant(dll, "EventModify", 1, one_returning);
     d.register_handler(dll, "CreateEventW", create_event_w);
@@ -5090,6 +5091,28 @@ fn request_power_notifications(ctx: &mut CallCtx<'_>) -> Result<DispatchOutcome,
 /// `BOOL StopPowerNotifications(HANDLE h)`
 fn stop_power_notifications(_ctx: &mut CallCtx<'_>) -> Result<DispatchOutcome, KernelError> {
     Ok(DispatchOutcome::ReturnedR0(1))
+}
+
+fn get_system_power_state(ctx: &mut CallCtx<'_>) -> Result<DispatchOutcome, KernelError> {
+    // Windows CE returns a DWORD error code here. We present the guest
+    // as a device that is powered on, with the backlight on, so
+    // startup loops that poll this API can move on.
+    const POWER_STATE_ON: u32 = 0x0001_0000;
+    const POWER_STATE_BACKLIGHT_ON: u32 = 0x0200_0000;
+
+    let buffer = ctx.arg_u32(0)?;
+    let length = ctx.arg_u32(1)?;
+    let flags_ptr = ctx.arg_u32(2)?;
+    if flags_ptr != 0 {
+        ctx.cpu.write_mem(
+            flags_ptr,
+            &(POWER_STATE_ON | POWER_STATE_BACKLIGHT_ON).to_le_bytes(),
+        )?;
+    }
+    if buffer != 0 && length != 0 {
+        let _ = write_wide_str(ctx.cpu, buffer, length, "On")?;
+    }
+    Ok(DispatchOutcome::ReturnedR0(0))
 }
 
 fn get_msg_queue_info(ctx: &mut CallCtx<'_>) -> Result<DispatchOutcome, KernelError> {
