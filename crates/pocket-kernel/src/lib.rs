@@ -1589,10 +1589,10 @@ impl Process {
         let stack_top = DEFAULT_STACK_TOP;
         let dynamic_exports = build_dynamic_exports(&thunks);
         let stack_base = stack_top - stack_size;
-        // Leave two guard-ish pages above the nominal top of stack.
+        // Leave a few guard-ish pages above the nominal top of stack.
         // Some WinCE/Gameloft code probes a little past SP/stack-top,
-        // and a single-page cushion was not enough in practice.
-        cpu.map_region(stack_base, stack_size + 0x2000, Prot::READ | Prot::WRITE)?;
+        // and we want a small safety buffer rather than a one-page shim.
+        cpu.map_region(stack_base, stack_size + 0x4000, Prot::READ | Prot::WRITE)?;
         cpu.write_reg(ArmReg::Sp, stack_top - 16)?;
         cpu.write_reg(ArmReg::Lr, PROCESS_EXIT_TRAMPOLINE_VA)?;
         if image.machine != machine::MIPS_R3000
