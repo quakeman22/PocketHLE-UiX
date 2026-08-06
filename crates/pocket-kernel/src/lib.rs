@@ -2142,6 +2142,9 @@ pub fn run_main_loop_with_hook(
             regs = dump_regs(cpu),
             mem = dump_mem_around(cpu, pc_now, 16),
         );
+        return Err(KernelError::Loader(format!(
+            "main loop hit max_slices={max_slices}; likely stuck in startup loop"
+        )));
     }
     Ok(())
 }
