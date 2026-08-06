@@ -637,6 +637,18 @@ pub extern "system" fn Java_com_pockethle_app_NativeBridge_nativeIsRunning<'loca
 }
 
 #[no_mangle]
+pub extern "system" fn Java_com_pockethle_app_NativeBridge_nativeSessionStatus<'local>(
+    env: JNIEnv<'local>,
+    _class: JClass<'local>,
+    handle: jlong,
+) -> jstring {
+    let Some(session) = session_from_handle(handle) else {
+        return new_jstring(&env, "");
+    };
+    new_jstring(&env, session.live_status())
+}
+
+#[no_mangle]
 pub extern "system" fn Java_com_pockethle_app_NativeBridge_nativeSendInput<'local>(
     _env: JNIEnv<'local>,
     _class: JClass<'local>,

@@ -106,6 +106,11 @@ struct SessionState {
     /// Final summary string. Populated by the worker right before
     /// it exits; read by [`finish`] after the join.
     summary: Mutex<Option<String>>,
+    /// Live status string the UI can poll while the emulator is
+    /// still running. Updated from the worker thread on frame
+    /// boundaries so the Android launcher can show boot progress and
+    /// the latest API / PC trace instead of a static "Running..." line.
+    live_status: Mutex<Option<String>>,
     /// Pull handle on the guest's mixed PCM, published by the worker
     /// once the emulator exists. Android has no cpal device, so the
     /// Kotlin side drains this from an `AudioTrack` feeder thread
@@ -119,6 +124,7 @@ impl SessionState {
             latest_frame: Mutex::new(None),
             running: Mutex::new(true),
             summary: Mutex::new(None),
+            live_status: Mutex::new(None),
             audio: Mutex::new(None),
         }
     }
@@ -191,6 +197,16 @@ impl Session {
             .ok()
             .and_then(|g| g.clone())
             .unwrap_or_else(|| "(no summary captured)".to_string())
+    }
+
+    /// Return the current live status text, if any.
+    pub fn live_status(&self) -> String {
+        self.state
+            .live_status
+            .lock()
+            .ok()
+            .and_then(|g| g.clone())
+            .unwrap_or_default()
     }
 }
 
@@ -332,6 +348,13 @@ fn run_game_to_completion(
     // auto-fire WM_QUIT after a fixed number of synthetic messages.
     emu.set_synthetic_message_budget(0);
 
+    if let Ok(mut slot) = state.live_status.lock() {
+        *slot = Some(format!(
+            "Booting...\n{}\n{}\n{}",
+            summary_lines[0], summary_lines[1], summary_lines[2]
+        ));
+    }
+
     let mut hook = SessionHook::new(Arc::clone(state), input_rx);
     let run_result = emu.run_with_hook(&mut hook);
     match run_result {
@@ -472,6 +495,18 @@ impl FrameHook for SessionHook {
 
         if stop_requested {
             kernel.should_stop = true;
+        }
+
+        let trace = kernel.boot_trace_lines();
+        if let Ok(mut slot) = self.state.live_status.lock() {
+            *slot = if trace.is_empty() {
+                Some("Booting...".to_string())
+            } else {
+                Some(trace.join("\n"))
+            };
+        }
+
+        if stop_requested {
             FrameAction::Stop
         } else {
             FrameAction::Continue
