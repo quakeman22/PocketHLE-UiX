@@ -314,6 +314,8 @@ impl Dispatcher for WinCeDispatcher {
         self.total_calls = self.total_calls.saturating_add(1);
         let handler_opt = self.resolve_handler(thunk);
         self.push_call(thunk.label().to_string());
+        let pc = cpu.read_reg(ArmReg::Pc).unwrap_or(thunk.thunk_va);
+        kernel.push_boot_trace(format!("api pc=0x{pc:08x} {}", thunk.label()));
 
         // Capture args before the handler may mutate them. Skip the
         // four register reads entirely when nothing is going to log
