@@ -104,6 +104,8 @@ pub struct WinCeDispatcher {
     handler_errors: u64,
     /// Recent notable events, preserved as short strings for summaries.
     recent_events: VecDeque<String>,
+    /// Recent dispatched calls, regardless of outcome.
+    recent_calls: VecDeque<String>,
 }
 
 impl Default for WinCeDispatcher {
@@ -124,6 +126,7 @@ impl WinCeDispatcher {
             unimplemented_calls: 0,
             handler_errors: 0,
             recent_events: VecDeque::with_capacity(24),
+            recent_calls: VecDeque::with_capacity(24),
         };
         coredll::register(&mut d);
         ddraw::register(&mut d);
@@ -201,6 +204,14 @@ impl WinCeDispatcher {
         self.recent_events.push_back(event);
     }
 
+    fn push_call(&mut self, call: String) {
+        const MAX_CALLS: usize = 24;
+        if self.recent_calls.len() == MAX_CALLS {
+            self.recent_calls.pop_front();
+        }
+        self.recent_calls.push_back(call);
+    }
+
     /// Human-readable summary of recent API behavior.
     pub fn diagnostics_lines(&self) -> Vec<String> {
         let mut lines = vec![
@@ -212,6 +223,12 @@ impl WinCeDispatcher {
             lines.push("Recent notable events:".to_string());
             for event in &self.recent_events {
                 lines.push(format!("  {event}"));
+            }
+        }
+        if !self.recent_calls.is_empty() {
+            lines.push("Recent calls:".to_string());
+            for call in &self.recent_calls {
+                lines.push(format!("  {call}"));
             }
         }
         lines
@@ -296,6 +313,7 @@ impl Dispatcher for WinCeDispatcher {
     ) -> Result<DispatchOutcome, KernelError> {
         self.total_calls = self.total_calls.saturating_add(1);
         let handler_opt = self.resolve_handler(thunk);
+        self.push_call(thunk.label().to_string());
 
         // Capture args before the handler may mutate them. Skip the
         // four register reads entirely when nothing is going to log
