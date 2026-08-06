@@ -233,6 +233,13 @@ pub trait Cpu {
         self.write_reg(regs::ArmReg::R1, second)
     }
 
+    /// Return the most recent backend fault, if the CPU backend tracks
+    /// one. Unicorn uses this to report the exact guest address that
+    /// triggered `MEM_INVALID`.
+    fn last_fault(&self) -> Option<(String, u64)> {
+        None
+    }
+
     /// Register an executable address that should immediately stop
     /// emulation when the PC reaches it. Used to install IAT thunks
     /// for unimplemented imports.

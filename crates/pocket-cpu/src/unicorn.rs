@@ -189,6 +189,10 @@ impl Cpu for UnicornCpu {
         self.arch
     }
 
+    fn last_fault(&self) -> Option<(String, u64)> {
+        self.last_fault.borrow().clone()
+    }
+
     fn map_region(&mut self, va: u32, size: u32, prot: Prot) -> Result<(), CpuError> {
         self.uc
             .mem_map(va as u64, size as u64, map_prot(prot))
