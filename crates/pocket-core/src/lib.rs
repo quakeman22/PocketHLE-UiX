@@ -157,6 +157,18 @@ impl Emulator {
         &self.dispatcher
     }
 
+    /// Combined diagnostic lines for API dispatch and boot tracing.
+    pub fn diagnostics_lines(&self) -> Vec<String> {
+        let mut lines = self.dispatcher.diagnostics_lines();
+        if let Some(process) = self.process.as_ref() {
+            let boot_lines = process.state.boot_trace_lines();
+            if !boot_lines.is_empty() {
+                lines.extend(boot_lines);
+            }
+        }
+        lines
+    }
+
     /// Write raw bytes into emulated guest memory. Useful for patching
     /// the loaded image (e.g. NOP'ing out a hostile static-init call)
     /// before [`Self::run`] is invoked.
