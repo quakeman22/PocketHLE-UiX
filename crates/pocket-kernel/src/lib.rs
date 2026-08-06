@@ -830,13 +830,6 @@ pub struct KernelState {
     /// at the next slice boundary. Used by the desktop GUI's "Back to
     /// library" button so the user can interrupt a running game.
     pub should_stop: bool,
-    /// Recent boot / startup milestones, preserved as a small ring
-    /// buffer so diagnostics can show the path that led into a stall.
-    pub boot_trace: VecDeque<String>,
-    /// Last PC recorded in the boot trace.
-    pub boot_last_pc: Option<u32>,
-    /// Number of consecutive slices spent at `boot_last_pc`.
-    pub boot_same_pc_slices: u64,
     /// Bitset of TLS slots that have been handed out by `TlsAlloc`.
     /// Bit `i` set means slot `i` is currently in use. Real WinCE
     /// would track this in the per-process kdata `aTlsSlotsUsed`
@@ -917,48 +910,6 @@ pub struct KernelState {
 }
 
 impl KernelState {
-    /// Record a recent boot / startup milestone.
-    pub fn push_boot_trace(&mut self, event: String) {
-        const MAX_BOOT_TRACE: usize = 48;
-        if self.boot_trace.len() == MAX_BOOT_TRACE {
-            self.boot_trace.pop_front();
-        }
-        self.boot_trace.push_back(event);
-    }
-
-    /// Record a slice boundary, collapsing repeated slices at the
-    /// same PC into periodic milestones.
-    pub fn record_boot_slice(&mut self, slice: u64, pc: u32) -> Option<String> {
-        match self.boot_last_pc {
-            Some(last_pc) if last_pc == pc => {
-                self.boot_same_pc_slices = self.boot_same_pc_slices.saturating_add(1);
-                let repeat = self.boot_same_pc_slices;
-                if repeat <= 4 || repeat.is_power_of_two() || repeat % 4096 == 0 {
-                    Some(format!("slice {slice} pc=0x{pc:08x} (same pc x{repeat})"))
-                } else {
-                    None
-                }
-            }
-            _ => {
-                self.boot_last_pc = Some(pc);
-                self.boot_same_pc_slices = 1;
-                Some(format!("slice {slice} start pc=0x{pc:08x}"))
-            }
-        }
-    }
-
-    /// Human-readable summary of the most recent boot milestones.
-    pub fn boot_trace_lines(&self) -> Vec<String> {
-        if self.boot_trace.is_empty() {
-            return Vec::new();
-        }
-        let mut lines = vec!["Boot trace:".to_string()];
-        for event in &self.boot_trace {
-            lines.push(format!("  {event}"));
-        }
-        lines
-    }
-
     /// Paint the built-in child controls on top of whatever the guest
     /// last drew, so the frame the host is about to show has them.
     ///
@@ -1585,11 +1536,22 @@ impl Process {
         }
 
         // 3. Map a stack.
+        //
+        // The extra 0x2000 above `stack_top` is a guard margin: several
+        // Gameloft-engine titles (e.g. Splinter Cell Conviction) have a
+        // worker thread that peeks a few bytes just past the main
+        // thread's reported stack top (likely a watchdog/canary read)
+        // before it will advance past its splash screen. `+ 0x1000`
+        // used to leave the very last word of that margin unmapped —
+        // `stack_top + 0x1000` is the first *unmapped* byte, one past
+        // the end of a `size`-byte region starting at `stack_base` — so
+        // that probe faulted with READ_UNMAPPED and the game never
+        // continued. Round up to a full extra page of slack instead.
         let stack_size = DEFAULT_STACK_SIZE;
         let stack_top = DEFAULT_STACK_TOP;
         let dynamic_exports = build_dynamic_exports(&thunks);
         let stack_base = stack_top - stack_size;
-        cpu.map_region(stack_base, stack_size + 0x1000, Prot::READ | Prot::WRITE)?;
+        cpu.map_region(stack_base, stack_size + 0x2000, Prot::READ | Prot::WRITE)?;
         cpu.write_reg(ArmReg::Sp, stack_top - 16)?;
         cpu.write_reg(ArmReg::Lr, PROCESS_EXIT_TRAMPOLINE_VA)?;
         if image.machine != machine::MIPS_R3000
@@ -1756,9 +1718,6 @@ impl Process {
                 window_userdata: HashMap::new(),
                 window_classes: HashMap::new(),
                 window_user_data: 0,
-                boot_trace: VecDeque::with_capacity(48),
-                boot_last_pc: None,
-                boot_same_pc_slices: 0,
                 synthetic_timer_id: 0,
                 synthetic_timer_interval_ms: 16,
                 synthetic_timer_next_ms: 0,
@@ -1950,19 +1909,12 @@ pub fn run_main_loop_with_hook(
         pc,
         process.stack_top
     );
-    process.state.push_boot_trace(format!(
-        "enter main entry=0x{pc:08x} stack_top=0x{:08x}",
-        process.stack_top
-    ));
     let mut slice = 0u64;
     loop {
         if max_slices != 0 && slice >= max_slices {
             break;
         }
         slice = slice.saturating_add(1);
-        if let Some(event) = process.state.record_boot_slice(slice, pc) {
-            process.state.push_boot_trace(event);
-        }
         // PC=0 (or any address in the unmapped null page) means
         // the guest jumped through a null function pointer or popped
         // a poisoned LR off the stack. Without an explicit halt,
@@ -1998,23 +1950,13 @@ pub fn run_main_loop_with_hook(
             Err(e) => {
                 let pc_now = cpu.read_reg(ArmReg::Pc).unwrap_or(pc);
                 let sp_now = cpu.read_reg(ArmReg::Sp).unwrap_or(0);
-                let lr_now = cpu.read_reg(ArmReg::Lr).unwrap_or(0);
-                let r0_now = cpu.read_reg(ArmReg::R0).unwrap_or(0);
                 let image_base = process.image.image_base;
                 let image_end = image_base.saturating_add(process.image.size_of_image);
-                process.state.push_boot_trace(format!(
-                    "cpu crash pc=0x{pc_now:08x} last_requested=0x{pc:08x} sp=0x{sp_now:08x} lr=0x{lr_now:08x} r0=0x{r0_now:08x}"
-                ));
                 log::error!(
-                        "cpu crashed: {e}\n  last requested pc=0x{pc:08x}, current pc=0x{pc_now:08x}\n{regs}{mem}{stack}{r0mem}",
+                        "cpu crashed: {e}\n  last requested pc=0x{pc:08x}, current pc=0x{pc_now:08x}\n{regs}{mem}{stack}",
                         regs = dump_regs(cpu),
                         mem = dump_mem_around(cpu, pc_now, 16),
                         stack = dump_stack_code_addrs(cpu, sp_now, 64, image_base, image_end),
-                        r0mem = if r0_now >= 0x1000 {
-                            format!("  memory around r0=0x{r0_now:08x}:\n{}", dump_mem_around(cpu, r0_now, 32))
-                        } else {
-                            format!("  memory around r0=0x{r0_now:08x}: <skipped low address>\n")
-                        },
                     );
                 return Err(e.into());
             }
@@ -2038,9 +1980,6 @@ pub fn run_main_loop_with_hook(
                             "process exit trampoline hit at 0x{addr:08x} (R0=0x{r0:08x}); shutting down",
                             r0 = cpu.read_reg(ArmReg::R0).unwrap_or(0),
                         );
-                    process
-                        .state
-                        .push_boot_trace(format!("exit trampoline pc=0x{addr:08x}"));
                     return Ok(());
                 }
                 if let Some(thread_index) = process
@@ -2079,9 +2018,6 @@ pub fn run_main_loop_with_hook(
                         process.state.threads[thread_index].finished = true;
                         process.state.current_thread = 0;
                         pc = thread.resume_pc;
-                        process.state.push_boot_trace(format!(
-                            "thread {thread_index} returned -> pc=0x{pc:08x}"
-                        ));
                     } else {
                         let values = thread.saved_regs;
                         for (index, value) in values.iter().enumerate() {
@@ -2110,9 +2046,6 @@ pub fn run_main_loop_with_hook(
                         }
                         process.state.current_thread = 0;
                         pc = thread.resume_pc;
-                        process.state.push_boot_trace(format!(
-                            "thread {thread_index} returned -> pc=0x{pc:08x}"
-                        ));
                     }
                     log::debug!(
                         "guest thread {} returned; resuming main at 0x{:08x}",
@@ -2160,9 +2093,6 @@ pub fn run_main_loop_with_hook(
                                 );
                             let lr = cpu.read_reg(ArmReg::Lr)?;
                             pc = lr;
-                            process.state.push_boot_trace(format!(
-                                "kernel trap soft-return 0x{addr:08x} -> pc=0x{pc:08x}"
-                            ));
                             // Skip the frame-hook for this slice —
                             // we did not actually advance the
                             // emulator, just bounced through a trap.
@@ -2177,76 +2107,47 @@ pub fn run_main_loop_with_hook(
                 };
                 match outcome {
                     DispatchOutcome::Halt => {
-                        process
-                            .state
-                            .push_boot_trace(format!("dispatcher halt at 0x{addr:08x}"));
                         return Ok(());
                     }
                     DispatchOutcome::ReturnedR0(v) => {
                         cpu.write_return(v)?;
                         let lr = cpu.read_reg(ArmReg::Lr)?;
                         pc = lr;
-                        process.state.push_boot_trace(format!(
-                            "dispatch return r0=0x{v:08x} -> pc=0x{pc:08x}"
-                        ));
                     }
                     DispatchOutcome::ReturnedR0R1(a, b) => {
                         cpu.write_return_pair(a, b)?;
                         let lr = cpu.read_reg(ArmReg::Lr)?;
                         pc = lr;
-                        process.state.push_boot_trace(format!(
-                            "dispatch return r0=0x{a:08x} r1=0x{b:08x} -> pc=0x{pc:08x}"
-                        ));
                     }
                     DispatchOutcome::Unimplemented => {
                         cpu.write_return(0)?;
                         let lr = cpu.read_reg(ArmReg::Lr)?;
                         pc = lr;
-                        process.state.push_boot_trace(format!(
-                            "dispatch unimplemented -> pc=0x{pc:08x}"
-                        ));
                     }
                     DispatchOutcome::JumpTo(target) => {
                         // Trampoline into a guest function — `target` is
                         // the new PC, the handler is responsible for
                         // setting LR / R0..R3 / SP appropriately.
                         pc = target;
-                        process
-                            .state
-                            .push_boot_trace(format!("dispatch jump -> pc=0x{pc:08x}"));
                     }
                 }
             }
-            StopReason::Requested | StopReason::OutOfBounds => {
-                process
-                    .state
-                    .push_boot_trace(format!("stop reason {:?}", stop));
-                return Ok(());
-            }
+            StopReason::Requested | StopReason::OutOfBounds => return Ok(()),
         }
         if let Some(hook) = frame_hook.as_deref_mut() {
             process.state.composite_controls();
             if hook.on_frame(&mut process.state) == FrameAction::Stop {
                 log::info!("frame hook requested stop");
-                process
-                    .state
-                    .push_boot_trace("frame hook requested stop".to_string());
                 return Ok(());
             }
         }
         if process.state.should_stop {
             log::info!("frame hook flagged should_stop");
-            process
-                .state
-                .push_boot_trace("frame hook flagged should_stop".to_string());
             return Ok(());
         }
     }
     if max_slices != 0 {
         let pc_now = cpu.read_reg(ArmReg::Pc).unwrap_or(0);
-        process.state.push_boot_trace(format!(
-            "max_slices reached at pc=0x{pc_now:08x} slice_limit={max_slices}"
-        ));
         log::warn!(
             "main loop hit max_slices={max_slices}; exiting at pc=0x{pc_now:08x}\n{regs}{mem}",
             regs = dump_regs(cpu),
