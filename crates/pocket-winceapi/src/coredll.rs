@@ -1759,8 +1759,12 @@ fn resume_thread(ctx: &mut CallCtx<'_>) -> Result<DispatchOutcome, KernelError> 
         log::debug!("ResumeThread(simulated child 0x{handle:08x}) -> 0");
         return Ok(DispatchOutcome::ReturnedR0(0));
     }
-    log::debug!("ResumeThread(0x{handle:08x}) -> -1");
-    Ok(DispatchOutcome::ReturnedR0(0xffff_ffff))
+    // Some startup loops suspend / resume a bookkeeping thread via a
+    // handle we do not model explicitly. Returning failure here keeps
+    // them spinning forever on a "retry on error" path, so treat the
+    // unknown handle as a benign no-op instead of a hard error.
+    log::warn!("ResumeThread(0x{handle:08x}) -> treating unknown handle as no-op");
+    Ok(DispatchOutcome::ReturnedR0(0))
 }
 
 fn suspend_thread(ctx: &mut CallCtx<'_>) -> Result<DispatchOutcome, KernelError> {
@@ -1777,8 +1781,13 @@ fn suspend_thread(ctx: &mut CallCtx<'_>) -> Result<DispatchOutcome, KernelError>
         log::debug!("SuspendThread(current) -> 0");
         return Ok(DispatchOutcome::ReturnedR0(0));
     }
-    log::debug!("SuspendThread(0x{handle:08x}) -> -1");
-    Ok(DispatchOutcome::ReturnedR0(0xffff_ffff))
+    // Same rationale as `ResumeThread`: a number of games use
+    // SuspendThread/ResumeThread as a cooperative "pause" primitive on
+    // a handle that is not one of the synthetic handles we hand out.
+    // Failing here is worse than being permissive because it traps the
+    // title in a retry loop on startup.
+    log::warn!("SuspendThread(0x{handle:08x}) -> treating unknown handle as no-op");
+    Ok(DispatchOutcome::ReturnedR0(0))
 }
 
 fn get_thread_context(ctx: &mut CallCtx<'_>) -> Result<DispatchOutcome, KernelError> {
