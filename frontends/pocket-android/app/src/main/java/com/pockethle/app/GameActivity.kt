@@ -1,11 +1,6 @@
 package com.pockethle.app
 
-import android.app.AlertDialog
 import android.annotation.SuppressLint
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
-import android.content.pm.ActivityInfo
 import android.opengl.GLES20
 import android.opengl.GLSurfaceView
 import android.media.AudioAttributes
@@ -18,15 +13,13 @@ import android.os.SystemClock
 import android.view.MotionEvent
 import android.view.View
 import android.widget.ProgressBar
-import android.widget.Button
-import android.widget.ScrollView
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import org.json.JSONObject
+import android.content.pm.ActivityInfo
 
 /**
  * Hosts the emulator output for one game.
@@ -46,13 +39,11 @@ class GameActivity : AppCompatActivity() {
     private lateinit var surface: GLSurfaceView
     private lateinit var progress: ProgressBar
     private lateinit var status: TextView
-    private lateinit var logButton: Button
     private lateinit var fpsOverlay: TextView
     private lateinit var glRenderer: FrameRenderer
 
     /** Cached handle from `nativeStartGame` (`0` once we've finished). */
     @Volatile private var session: Long = 0
-    private var lastSessionLog: String? = null
 
     /** Most recent framebuffer the worker produced — held so we can
      * repaint after `surfaceChanged` resizes the SurfaceView even if
@@ -94,6 +85,10 @@ class GameActivity : AppCompatActivity() {
                     paintFrame(frame)
                 }
             }
+            val liveStatus = NativeBridge.nativeSessionStatus(session)
+            if (liveStatus.isNotBlank() && status.text.toString() != liveStatus) {
+                status.text = liveStatus
+            }
             if (NativeBridge.nativeIsRunning(session) == 0) {
                 // Worker exited on its own (game called ExitProcess
                 // / hit max_slices / errored out). Reap it so we
@@ -129,8 +124,6 @@ class GameActivity : AppCompatActivity() {
         progress = findViewById(R.id.progress)
         fpsOverlay = findViewById(R.id.fps_overlay)
         status = findViewById(R.id.status)
-        logButton = findViewById(R.id.btn_log)
-        logButton.setOnClickListener { showLogDialog() }
 
         showFps = readShowFpsPreference()
 
@@ -140,7 +133,6 @@ class GameActivity : AppCompatActivity() {
         val id = intent.getStringExtra(EXTRA_GAME_ID)
         if (id == null) {
             status.text = getString(R.string.run_failed_no_id)
-            lastSessionLog = status.text.toString()
             progress.visibility = View.GONE
             return
         }
@@ -150,13 +142,11 @@ class GameActivity : AppCompatActivity() {
         if (handle == 0L) {
             progress.visibility = View.GONE
             status.text = "Could not start emulator (see logcat)."
-            lastSessionLog = status.text.toString()
             return
         }
         session = handle
         startAudio(handle)
-        status.text = "Backend: Unicorn (ARM)\nRunning…"
-        lastSessionLog = status.text.toString()
+        status.text = "Backend: Unicorn (ARM)\nBooting…"
         // The spinner gets hidden the moment the first frame arrives.
         mainHandler.postDelayed(pollTick, POLL_INTERVAL_MS)
     }
@@ -202,7 +192,7 @@ class GameActivity : AppCompatActivity() {
 
     /**
      * Stop the emulator if it is still running, free the native
-     * session, and keep the detailed summary behind the Log button.
+     * session, and surface the textual summary in the status panel.
      */
     private fun finishSession() {
         val handle = session
@@ -218,51 +208,9 @@ class GameActivity : AppCompatActivity() {
             NativeBridge.nativeRequestStop(handle)
             val summary = NativeBridge.nativeFinishGame(handle)
             mainHandler.post {
-                val trimmed = summary.trim()
-                if (trimmed.isNotEmpty()) {
-                    lastSessionLog = trimmed
-                    status.text = getString(R.string.game_log_ready)
-                } else {
-                    lastSessionLog = getString(R.string.game_log_empty)
-                    status.text = getString(R.string.game_log_empty)
-                }
+                status.text = summary
             }
         }.start()
-    }
-
-    private fun showLogDialog() {
-        val logText = lastSessionLog?.takeIf { it.isNotBlank() }
-            ?: status.text.toString().takeIf { it.isNotBlank() }
-            ?: getString(R.string.game_log_empty)
-
-        val content = TextView(this).apply {
-            text = logText
-            setTextIsSelectable(true)
-            setTextColor(0xFF10233E.toInt())
-            textSize = 13f
-            setPadding(20, 16, 20, 16)
-            typeface = android.graphics.Typeface.MONOSPACE
-        }
-
-        val scroll = ScrollView(this).apply {
-            isFillViewport = true
-            addView(content)
-        }
-
-        AlertDialog.Builder(this)
-            .setTitle(R.string.game_log_title)
-            .setView(scroll)
-            .setPositiveButton(R.string.game_log_copy) { _, _ ->
-                copyLogToClipboard(logText)
-            }
-            .setNegativeButton(R.string.game_log_close, null)
-            .show()
-    }
-
-    private fun copyLogToClipboard(text: String) {
-        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        clipboard.setPrimaryClip(ClipData.newPlainText(getString(R.string.game_log_title), text))
-        Toast.makeText(this, R.string.game_log_copied, Toast.LENGTH_SHORT).show()
     }
 
     private fun startAudio(handle: Long) {

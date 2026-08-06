@@ -90,6 +90,9 @@ object NativeBridge {
     /** `1` while the worker is still running, `0` once it has exited. */
     @JvmStatic external fun nativeIsRunning(handle: Long): Int
 
+    /** Live status / boot trace text for the running session. */
+    @JvmStatic external fun nativeSessionStatus(handle: Long): String
+
     /**
      * Forward a single input event into the running emulator.
      *
