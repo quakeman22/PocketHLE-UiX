@@ -1769,6 +1769,8 @@ fn resume_thread(ctx: &mut CallCtx<'_>) -> Result<DispatchOutcome, KernelError> 
 
 fn suspend_thread(ctx: &mut CallCtx<'_>) -> Result<DispatchOutcome, KernelError> {
     let handle = ctx.arg_u32(0)?;
+    ctx.kernel
+        .push_boot_trace(format!("SuspendThread handle=0x{handle:08x}"));
     if let Some(index) = thread_index_for_handle(ctx, handle) {
         let thread = &mut ctx.kernel.threads[index];
         let prev = thread.suspend_count;
@@ -1796,6 +1798,9 @@ fn get_thread_context(ctx: &mut CallCtx<'_>) -> Result<DispatchOutcome, KernelEr
     if context_ptr == 0 {
         return Ok(DispatchOutcome::ReturnedR0(0));
     }
+    ctx.kernel.push_boot_trace(format!(
+        "GetThreadContext handle=0x{handle:08x} context=0x{context_ptr:08x}"
+    ));
     let flags = ctx.cpu.read_u32_le(context_ptr).unwrap_or(0x0000_003f);
     let Some(regs) = thread_regs_for_handle(ctx, handle)? else {
         return Ok(DispatchOutcome::ReturnedR0(0));
