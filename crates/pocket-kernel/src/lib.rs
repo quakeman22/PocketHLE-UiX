@@ -833,6 +833,10 @@ pub struct KernelState {
     /// Recent boot / startup milestones, preserved as a small ring
     /// buffer so diagnostics can show the path that led into a stall.
     pub boot_trace: VecDeque<String>,
+    /// Last PC recorded in the boot trace.
+    pub boot_last_pc: Option<u32>,
+    /// Number of consecutive slices spent at `boot_last_pc`.
+    pub boot_same_pc_slices: u64,
     /// Bitset of TLS slots that have been handed out by `TlsAlloc`.
     /// Bit `i` set means slot `i` is currently in use. Real WinCE
     /// would track this in the per-process kdata `aTlsSlotsUsed`
@@ -920,6 +924,27 @@ impl KernelState {
             self.boot_trace.pop_front();
         }
         self.boot_trace.push_back(event);
+    }
+
+    /// Record a slice boundary, collapsing repeated slices at the
+    /// same PC into periodic milestones.
+    pub fn record_boot_slice(&mut self, slice: u64, pc: u32) -> Option<String> {
+        match self.boot_last_pc {
+            Some(last_pc) if last_pc == pc => {
+                self.boot_same_pc_slices = self.boot_same_pc_slices.saturating_add(1);
+                let repeat = self.boot_same_pc_slices;
+                if repeat <= 4 || repeat.is_power_of_two() || repeat % 4096 == 0 {
+                    Some(format!("slice {slice} pc=0x{pc:08x} (same pc x{repeat})"))
+                } else {
+                    None
+                }
+            }
+            _ => {
+                self.boot_last_pc = Some(pc);
+                self.boot_same_pc_slices = 1;
+                Some(format!("slice {slice} start pc=0x{pc:08x}"))
+            }
+        }
     }
 
     /// Human-readable summary of the most recent boot milestones.
@@ -1732,6 +1757,8 @@ impl Process {
                 window_classes: HashMap::new(),
                 window_user_data: 0,
                 boot_trace: VecDeque::with_capacity(48),
+                boot_last_pc: None,
+                boot_same_pc_slices: 0,
                 synthetic_timer_id: 0,
                 synthetic_timer_interval_ms: 16,
                 synthetic_timer_next_ms: 0,
@@ -1751,6 +1778,9 @@ impl Process {
                 current_thread: 0,
                 pressed_keys: [false; 256],
                 should_stop: false,
+                boot_trace: VecDeque::with_capacity(48),
+                boot_last_pc: None,
+                boot_same_pc_slices: 0,
                 tls_slots_used: 0,
                 vector_iter_stack: Vec::new(),
                 qsort_frames: HashMap::new(),
@@ -1933,9 +1963,9 @@ pub fn run_main_loop_with_hook(
             break;
         }
         slice = slice.saturating_add(1);
-        process
-            .state
-            .push_boot_trace(format!("slice {slice} start pc=0x{pc:08x}"));
+        if let Some(event) = process.state.record_boot_slice(slice, pc) {
+            process.state.push_boot_trace(event);
+        }
         // PC=0 (or any address in the unmapped null page) means
         // the guest jumped through a null function pointer or popped
         // a poisoned LR off the stack. Without an explicit halt,
@@ -1971,16 +2001,23 @@ pub fn run_main_loop_with_hook(
             Err(e) => {
                 let pc_now = cpu.read_reg(ArmReg::Pc).unwrap_or(pc);
                 let sp_now = cpu.read_reg(ArmReg::Sp).unwrap_or(0);
+                let lr_now = cpu.read_reg(ArmReg::Lr).unwrap_or(0);
+                let r0_now = cpu.read_reg(ArmReg::R0).unwrap_or(0);
                 let image_base = process.image.image_base;
                 let image_end = image_base.saturating_add(process.image.size_of_image);
                 process.state.push_boot_trace(format!(
-                    "cpu crash pc=0x{pc_now:08x} last_requested=0x{pc:08x}"
+                    "cpu crash pc=0x{pc_now:08x} last_requested=0x{pc:08x} sp=0x{sp_now:08x} lr=0x{lr_now:08x} r0=0x{r0_now:08x}"
                 ));
                 log::error!(
-                        "cpu crashed: {e}\n  last requested pc=0x{pc:08x}, current pc=0x{pc_now:08x}\n{regs}{mem}{stack}",
+                        "cpu crashed: {e}\n  last requested pc=0x{pc:08x}, current pc=0x{pc_now:08x}\n{regs}{mem}{stack}{r0mem}",
                         regs = dump_regs(cpu),
                         mem = dump_mem_around(cpu, pc_now, 16),
                         stack = dump_stack_code_addrs(cpu, sp_now, 64, image_base, image_end),
+                        r0mem = if r0_now >= 0x1000 {
+                            format!("  memory around r0=0x{r0_now:08x}:\n{}", dump_mem_around(cpu, r0_now, 32))
+                        } else {
+                            format!("  memory around r0=0x{r0_now:08x}: <skipped low address>\n")
+                        },
                     );
                 return Err(e.into());
             }
