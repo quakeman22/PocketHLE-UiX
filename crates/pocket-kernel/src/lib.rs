@@ -2004,6 +2004,7 @@ pub fn run_main_loop_with_hook(
                 let lr_now = cpu.read_reg(ArmReg::Lr).unwrap_or(0);
                 let r0_now = cpu.read_reg(ArmReg::R0).unwrap_or(0);
                 let fault = cpu.last_fault();
+                let fault_addr = fault.as_ref().map(|(_, addr)| *addr).unwrap_or(0);
                 let image_base = process.image.image_base;
                 let image_end = image_base.saturating_add(process.image.size_of_image);
                 process.state.push_boot_trace(format!(
@@ -2014,13 +2015,24 @@ pub fn run_main_loop_with_hook(
                         .unwrap_or_else(|| "<none>".to_string())
                 ));
                 log::error!(
-                        "cpu crashed: {e}\n  last requested pc=0x{pc:08x}, current pc=0x{pc_now:08x}\n  fault={fault_desc}\n{regs}{mem}{stack}{r0mem}",
+                        "cpu crashed: {e}\n  last requested pc=0x{pc:08x}, current pc=0x{pc_now:08x}\n  fault={fault_desc}\n{regs}{mem}{faultmem}{stack}{r0mem}",
                         fault_desc = fault
                             .as_ref()
                             .map(|(kind, addr)| format!("{kind} @ 0x{addr:08x}"))
                             .unwrap_or_else(|| "<none>".to_string()),
                         regs = dump_regs(cpu),
-                        mem = dump_mem_around(cpu, pc_now, 16),
+                        mem = format!(
+                            "  memory around pc=0x{pc_now:08x}:\n{}",
+                            dump_mem_around(cpu, pc_now, 32)
+                        ),
+                        faultmem = if fault_addr >= 0x1000 {
+                            format!(
+                                "  memory around fault=0x{fault_addr:08x}:\n{}",
+                                dump_mem_around(cpu, fault_addr as u32, 32)
+                            )
+                        } else {
+                            String::new()
+                        },
                         stack = dump_stack_code_addrs(cpu, sp_now, 64, image_base, image_end),
                         r0mem = if r0_now >= 0x1000 {
                             format!("  memory around r0=0x{r0_now:08x}:\n{}", dump_mem_around(cpu, r0_now, 32))
