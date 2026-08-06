@@ -338,7 +338,7 @@ fn run_game_to_completion(
         Ok(()) => summary_lines.push("Emulator exited cleanly.".to_string()),
         Err(e) => summary_lines.push(format!("Emulator stopped: {e:#}")),
     }
-    let diagnostics = emu.dispatcher().diagnostics_lines();
+    let diagnostics = emu.diagnostics_lines();
     if !diagnostics.is_empty() {
         summary_lines.push("Diagnostics:".to_string());
         summary_lines.extend(diagnostics.into_iter().map(|line| format!("  {line}")));
