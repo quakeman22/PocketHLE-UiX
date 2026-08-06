@@ -1551,6 +1551,12 @@ fn thread_regs_for_handle(ctx: &mut CallCtx<'_>, handle: u32) -> Result<Option<[
     let Some(index) = thread_index_for_handle(ctx, handle) else {
         return Ok(None);
     };
+    let is_current_thread = ctx
+        .kernel
+        .current_thread
+        .checked_sub(1)
+        .map(|current| current == index)
+        .unwrap_or(false);
     let (worker_saved, started, worker_regs, saved_regs) = {
         let thread = &ctx.kernel.threads[index];
         (
@@ -1562,7 +1568,7 @@ fn thread_regs_for_handle(ctx: &mut CallCtx<'_>, handle: u32) -> Result<Option<[
     };
     if worker_saved {
         Ok(Some(worker_regs))
-    } else if started {
+    } else if is_current_thread {
         read_guest_regs(ctx.cpu).map(Some)
     } else {
         Ok(Some(saved_regs))
