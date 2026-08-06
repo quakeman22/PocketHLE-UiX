@@ -1592,7 +1592,7 @@ impl Process {
         // Leave a few guard-ish pages above the nominal top of stack.
         // Some WinCE/Gameloft code probes a little past SP/stack-top,
         // and we want a small safety buffer rather than a one-page shim.
-        cpu.map_region(stack_base, stack_size + 0x4000, Prot::READ | Prot::WRITE)?;
+        cpu.map_region(stack_base, stack_size + 0x2000, Prot::READ | Prot::WRITE)?;
         cpu.write_reg(ArmReg::Sp, stack_top - 16)?;
         cpu.write_reg(ArmReg::Lr, PROCESS_EXIT_TRAMPOLINE_VA)?;
         if image.machine != machine::MIPS_R3000
@@ -2003,13 +2003,22 @@ pub fn run_main_loop_with_hook(
                 let sp_now = cpu.read_reg(ArmReg::Sp).unwrap_or(0);
                 let lr_now = cpu.read_reg(ArmReg::Lr).unwrap_or(0);
                 let r0_now = cpu.read_reg(ArmReg::R0).unwrap_or(0);
+                let fault = cpu.last_fault();
                 let image_base = process.image.image_base;
                 let image_end = image_base.saturating_add(process.image.size_of_image);
                 process.state.push_boot_trace(format!(
-                    "cpu crash pc=0x{pc_now:08x} last_requested=0x{pc:08x} sp=0x{sp_now:08x} lr=0x{lr_now:08x} r0=0x{r0_now:08x}"
+                    "cpu crash pc=0x{pc_now:08x} last_requested=0x{pc:08x} sp=0x{sp_now:08x} lr=0x{lr_now:08x} r0=0x{r0_now:08x} fault={}",
+                    fault
+                        .as_ref()
+                        .map(|(kind, addr)| format!("{kind} @ 0x{addr:08x}"))
+                        .unwrap_or_else(|| "<none>".to_string())
                 ));
                 log::error!(
-                        "cpu crashed: {e}\n  last requested pc=0x{pc:08x}, current pc=0x{pc_now:08x}\n{regs}{mem}{stack}{r0mem}",
+                        "cpu crashed: {e}\n  last requested pc=0x{pc:08x}, current pc=0x{pc_now:08x}\n  fault={fault_desc}\n{regs}{mem}{stack}{r0mem}",
+                        fault_desc = fault
+                            .as_ref()
+                            .map(|(kind, addr)| format!("{kind} @ 0x{addr:08x}"))
+                            .unwrap_or_else(|| "<none>".to_string()),
                         regs = dump_regs(cpu),
                         mem = dump_mem_around(cpu, pc_now, 16),
                         stack = dump_stack_code_addrs(cpu, sp_now, 64, image_base, image_end),
