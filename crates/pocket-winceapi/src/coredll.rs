@@ -8162,9 +8162,12 @@ fn create_thread(ctx: &mut CallCtx<'_>) -> Result<DispatchOutcome, KernelError> 
     saved_regs[0] = handle;
     let stack_size = stack_size.min(0x100000);
     let stack_base = stack_top.saturating_sub(stack_size) & !0xfff;
+    // Leave a little extra room above the nominal top of each worker
+    // stack too. Some titles probe just past the boundary while
+    // setting up watchdog / thread-context bookkeeping.
     ctx.cpu.map_region(
         stack_base,
-        pocket_cpu::round_up_to_page(stack_size),
+        pocket_cpu::round_up_to_page(stack_size + 0x2000),
         pocket_cpu::Prot::READ | pocket_cpu::Prot::WRITE,
     )?;
     let mut thread = GuestThread::new(
