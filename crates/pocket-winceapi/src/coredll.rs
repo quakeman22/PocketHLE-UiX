@@ -299,6 +299,10 @@ pub fn register(d: &mut WinCeDispatcher) {
     d.register_handler(dll, "strtol", strtol_handler);
     d.register_handler(dll, "strtoul", strtol_handler);
     d.register_handler(dll, "isctype", isctype);
+    d.register_handler(dll, "floorf", m_floorf);
+    d.register_handler(dll, "ceilf", m_ceilf);
+    d.register_handler(dll, "fabsf", m_fabsf);
+    d.register_handler(dll, "fmodf", m_fmodf);
 
     // ---- Heap ----
     d.register_handler(dll, "LocalAlloc", local_alloc);
@@ -9165,6 +9169,15 @@ fn m_ceil(c: &mut CallCtx<'_>) -> Result<DispatchOutcome, KernelError> {
 fn m_fabs(c: &mut CallCtx<'_>) -> Result<DispatchOutcome, KernelError> {
     libm_unary_d(c, f64::abs)
 }
+fn m_floorf(c: &mut CallCtx<'_>) -> Result<DispatchOutcome, KernelError> {
+    Ok(ret_f32(read_f32(c, 0)?.floor()))
+}
+fn m_ceilf(c: &mut CallCtx<'_>) -> Result<DispatchOutcome, KernelError> {
+    Ok(ret_f32(read_f32(c, 0)?.ceil()))
+}
+fn m_fabsf(c: &mut CallCtx<'_>) -> Result<DispatchOutcome, KernelError> {
+    Ok(ret_f32(read_f32(c, 0)?.abs()))
+}
 
 fn m_atan2(c: &mut CallCtx<'_>) -> Result<DispatchOutcome, KernelError> {
     libm_binary_d(c, f64::atan2)
@@ -9174,6 +9187,9 @@ fn m_pow(c: &mut CallCtx<'_>) -> Result<DispatchOutcome, KernelError> {
 }
 fn m_fmod(c: &mut CallCtx<'_>) -> Result<DispatchOutcome, KernelError> {
     libm_binary_d(c, |a, b| a % b)
+}
+fn m_fmodf(c: &mut CallCtx<'_>) -> Result<DispatchOutcome, KernelError> {
+    Ok(ret_f32(read_f32(c, 0)? % read_f32(c, 1)?))
 }
 fn m_hypot(c: &mut CallCtx<'_>) -> Result<DispatchOutcome, KernelError> {
     libm_binary_d(c, f64::hypot)
