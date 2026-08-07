@@ -1592,7 +1592,7 @@ impl Process {
         // Leave a few guard-ish pages above the nominal top of stack.
         // Some WinCE/Gameloft code probes a little past SP/stack-top,
         // and we want a small safety buffer rather than a one-page shim.
-        cpu.map_region(stack_base, stack_size + 0x2000, Prot::READ | Prot::WRITE)?;
+        cpu.map_region(stack_base, stack_size + 0x3000, Prot::READ | Prot::WRITE)?;
         cpu.write_reg(ArmReg::Sp, stack_top - 16)?;
         cpu.write_reg(ArmReg::Lr, PROCESS_EXIT_TRAMPOLINE_VA)?;
         if image.machine != machine::MIPS_R3000
