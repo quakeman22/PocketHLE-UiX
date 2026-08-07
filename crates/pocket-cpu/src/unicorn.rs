@@ -47,8 +47,20 @@ impl UnicornCpu {
                 ::unicorn_engine::unicorn_const::HookType::MEM_INVALID,
                 0,
                 u64::MAX,
-                move |_uc, kind, addr, size, _value| {
-                    *sink.borrow_mut() = Some((format!("{kind:?} size={size}"), addr));
+                move |uc, kind, addr, size, _value| {
+                    let pc = uc.reg_read(RegisterARM::PC).unwrap_or(0);
+                    let sp = uc.reg_read(RegisterARM::SP).unwrap_or(0);
+                    let lr = uc.reg_read(RegisterARM::LR).unwrap_or(0);
+                    let r0 = uc.reg_read(RegisterARM::R0).unwrap_or(0);
+                    let r1 = uc.reg_read(RegisterARM::R1).unwrap_or(0);
+                    let r2 = uc.reg_read(RegisterARM::R2).unwrap_or(0);
+                    let r3 = uc.reg_read(RegisterARM::R3).unwrap_or(0);
+                    *sink.borrow_mut() = Some((
+                        format!(
+                            "{kind:?} size={size} pc=0x{pc:08x} sp=0x{sp:08x} lr=0x{lr:08x} r0=0x{r0:08x} r1=0x{r1:08x} r2=0x{r2:08x} r3=0x{r3:08x}"
+                        ),
+                        addr,
+                    ));
                     false
                 },
             );
