@@ -8150,23 +8150,6 @@ fn create_thread(ctx: &mut CallCtx<'_>) -> Result<DispatchOutcome, KernelError> 
         saved_regs[index] = ctx.cpu.read_reg(reg)?;
     }
     saved_regs[15] = resume_pc;
-    // `saved_regs` was just populated with a live snapshot of the
-    // *calling* thread's registers (see the loop above) so every field
-    // except the ones explicitly overridden here is stale. R0/PC get
-    // fixed up below; SP needs the same treatment — otherwise
-    // `GetThreadContext` on this thread before it has actually started
-    // reports the *caller's* stack pointer instead of this thread's own
-    // freshly-mapped one. Splinter Cell Conviction calls
-    // `SuspendThread` + `GetThreadContext` on a freshly created thread
-    // before resuming it (a watchdog/bookkeeping pattern), reads that
-    // bogus SP, and derefs an address computed from it — which lands
-    // near the *main* thread's stack instead of this thread's, and
-    // eventually walks past whatever guard margin happens to be mapped
-    // there. `stack_top - 16` matches the SP every other start path in
-    // this function already uses (the immediate-start and
-    // `CREATE_SUSPENDED` cases below).
-    saved_regs[13] = stack_top - 16;
-    saved_regs[14] = exit_va;
     let handle = 0xDEAD_7C00u32.saturating_add(thread_index as u32);
     // Thread ids start at 2: id 1 is the main thread, and 0 must stay
     // reserved because `PostThreadMessageW(0, ...)` is what a guest
@@ -8184,7 +8167,7 @@ fn create_thread(ctx: &mut CallCtx<'_>) -> Result<DispatchOutcome, KernelError> 
     // setting up watchdog / thread-context bookkeeping.
     ctx.cpu.map_region(
         stack_base,
-        pocket_cpu::round_up_to_page(stack_size + 0x4000),
+        pocket_cpu::round_up_to_page(stack_size + 0x3000),
         pocket_cpu::Prot::READ | pocket_cpu::Prot::WRITE,
     )?;
     let mut thread = GuestThread::new(
