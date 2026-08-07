@@ -8167,7 +8167,7 @@ fn create_thread(ctx: &mut CallCtx<'_>) -> Result<DispatchOutcome, KernelError> 
     // setting up watchdog / thread-context bookkeeping.
     ctx.cpu.map_region(
         stack_base,
-        pocket_cpu::round_up_to_page(stack_size + 0x3000),
+        pocket_cpu::round_up_to_page(stack_size + 0x100000),
         pocket_cpu::Prot::READ | pocket_cpu::Prot::WRITE,
     )?;
     let mut thread = GuestThread::new(
